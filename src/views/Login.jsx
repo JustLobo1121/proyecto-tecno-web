@@ -36,19 +36,29 @@ function Login({ setIsAuthenticated }) {
                     Usuario
                 </p>
                 <input
-                value={username}
-                className="border border-gray-200 dark:border-gray-700 rounded-xl"
-                onChange={(event) => {setUsername(event.target.value); event.target.value ? event.target.className = "border border-gray-200 dark:border-gray-700 rounded-xl" : event.target.className = "border border-red-600 rounded-xl"}}
-                ></input>
+                    value={username}
+                    placeholder="Usuario"
+                    onChange={(event) => setUsername(event.target.value)}
+                    className={`w-full px-4 py-2 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 transition-all rounded-xl border ${
+                        username === "" 
+                            ? "border-red-600 focus:ring-red-500" 
+                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"
+                    }`}
+                />
                 <p className="text-gray-500 dark:text-gray-400 text-sm text-center max-w-xs">
                     Contraseña
                 </p>
                 <input
-                type="password"
-                value={password}
-                className="border border-gray-200 dark:border-gray-700 rounded-xl"
-                onChange={(event) => {setPassword(event.target.value); event.target.value ? event.target.className = "border border-gray-200 dark:border-gray-700 rounded-xl" : event.target.className = "border border-red-600 rounded-xl"}}
-                ></input>
+                    type="password"
+                    value={password}
+                    placeholder="Contraseña"
+                    onChange={(event) => setPassword(event.target.value)}
+                    className={`w-full px-4 py-2 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 transition-all rounded-xl border ${
+                        password === "" 
+                            ? "border-red-600 focus:ring-red-500" 
+                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"
+                    }`}
+                />
                 { !success && (<h1 className="text-[#ff0000]-500 dark:text-[#ff0000]-400 text-sm text-center max-w-xs">Usuario o contraseña incorrectos.</h1>)}
                 <button
                     onClick={handleLogin}
