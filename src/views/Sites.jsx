@@ -1,6 +1,9 @@
 import { getSites } from '../api/sites'
 import { useEffect, useState } from 'react'
 import { CardSites } from '../components/Cards'
+import { MapContainer, Marker, TileLayer } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import 'leaflet/dist/leaflet.js'
 
 function Sites() {
     const [active, setActive] = useState([])
@@ -72,17 +75,29 @@ function Sites() {
                                 &times;
                             </button>
                         </div>
-                        <div className="p-5 space-y-3 text-gray-700 dark:text-gray-300">
-                            <p><strong>ID:</strong> {dataModal.id} - {dataModal.code}</p>
-                            <p><strong>Área:</strong> {dataModal.area}</p>
-                            <p>
-                                <strong>Estado:</strong>{' '}
-                                <span className={dataModal.active ? 'text-green-500' : 'text-red-500'}>
-                                    {dataModal.active ? 'Operativo' : 'Inactivo'}
-                                </span>
-                            </p>
-                            <p><strong>Latitud:</strong> {dataModal.latitude}</p>
-                            <p><strong>Longitud:</strong> {dataModal.longitude}</p>
+                        <div>
+                            <div className="p-5 space-y-3 text-gray-700 dark:text-gray-300">
+                                <p><strong>ID:</strong> {dataModal.id} - {dataModal.code}</p>
+                                <p><strong>Área:</strong> {dataModal.area}</p>
+                                <p>
+                                    <strong>Estado:</strong>{' '}
+                                    <span className={dataModal.active ? 'text-green-500' : 'text-red-500'}>
+                                        {dataModal.active ? 'Operativo' : 'Inactivo'}
+                                    </span>
+                                </p>
+                                <p><strong>Latitud:</strong> {dataModal.latitude}</p>
+                                <p><strong>Longitud:</strong> {dataModal.longitude}</p>
+                            </div>
+                            <div className="p-5 space-y-3 text-gray-700 dark:text-gray-300">
+                                <MapContainer center={[dataModal.latitude, dataModal.longitude]} zoom={8} scrollWheelZoom={false} style={{height: 300}}>
+                                    <TileLayer
+                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+                                    <Marker position={[dataModal.latitude, dataModal.longitude]}>
+                                    </Marker>
+                            </MapContainer>
+                            </div>
                         </div>
                         <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end">
                             <button 
