@@ -7,14 +7,17 @@ function Login({ setIsAuthenticated }) {
     const [password, setPassword] = useState("");
     const [success, setSuccess] = useState(true);
     const navigate = useNavigate()
+
     const handleLoginSuccess = (request) => {
         localStorage.setItem(TOKEN_KEY, request["access_token"])
         setIsAuthenticated(true);
         navigate("/dashboard");
     }
+
     const handleLoginFailure = () => {
         setSuccess(false);
     }
+
     const handleLogin = () => {
         if (!username || !password) return;
         apiFetch("/token", {method: "POST", body: new URLSearchParams({ username: username, password: password})})
@@ -22,6 +25,7 @@ function Login({ setIsAuthenticated }) {
         .catch(handleLoginFailure)
     }
 
+    // Check if we have a token in localStorage before returning the actual view
     useEffect(() => {
         if (localStorage.getItem(TOKEN_KEY)) {
         setIsAuthenticated(true);
