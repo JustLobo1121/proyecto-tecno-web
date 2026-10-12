@@ -6,6 +6,8 @@ function Login({ setIsAuthenticated }) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [success, setSuccess] = useState(true);
+    const [usernameClass, setUsernameClass] = useState("border-gray-200 dark:border-gray-700 focus:ring-blue-500");
+    const [passwordClass, setPasswordClass] = useState("border-gray-200 dark:border-gray-700 focus:ring-blue-500");
     const navigate = useNavigate()
 
     const handleLoginSuccess = (request) => {
@@ -42,12 +44,9 @@ function Login({ setIsAuthenticated }) {
                 <input
                     value={username}
                     placeholder="Usuario"
-                    onChange={(event) => setUsername(event.target.value)}
-                    className={`w-full px-4 py-2 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 transition-all rounded-xl border ${
-                        username === "" 
-                            ? "border-red-600 focus:ring-red-500" 
-                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"
-                    }`}
+                    // Using the reactive variable in here causes weird behavior
+                    onChange={(event) => {setUsername(event.target.value); setUsernameClass(event.target.value ? "border-gray-200 dark:border-gray-700 focus:ring-blue-500" : "border-red-600 focus:ring-red-500")}}
+                    className={`w-full px-4 py-2 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 transition-all rounded-xl border ${usernameClass}`}
                 />
                 <p className="text-gray-500 dark:text-gray-400 text-sm text-center max-w-xs">
                     Contraseña
@@ -56,12 +55,9 @@ function Login({ setIsAuthenticated }) {
                     type="password"
                     value={password}
                     placeholder="Contraseña"
-                    onChange={(event) => setPassword(event.target.value)}
-                    className={`w-full px-4 py-2 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 transition-all rounded-xl border ${
-                        password === "" 
-                            ? "border-red-600 focus:ring-red-500" 
-                            : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"
-                    }`}
+                    // Using the reactive variable in here causes weird behavior
+                    onChange={(event) => {setPassword(event.target.value); setPasswordClass(event.target.value ? "border-gray-200 dark:border-gray-700 focus:ring-blue-500" : "border-red-600 focus:ring-red-500")}}
+                    className={`w-full px-4 py-2 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 transition-all rounded-xl border ${passwordClass}`}
                 />
                 { !success && (<h1 className="text-red-500 dark:text-red-400 text-sm text-center max-w-xs">Usuario o contraseña incorrectos.</h1>)}
                 <button
