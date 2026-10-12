@@ -63,7 +63,7 @@ function Login({ setIsAuthenticated }) {
                             : "border-gray-200 dark:border-gray-700 focus:ring-blue-500"
                     }`}
                 />
-                { !success && (<h1 className="text-[#ff0000]-500 dark:text-[#ff0000]-400 text-sm text-center max-w-xs">Usuario o contraseña incorrectos.</h1>)}
+                { !success && (<h1 className="text-red-500 dark:text-red-400 text-sm text-center max-w-xs">Usuario o contraseña incorrectos.</h1>)}
                 <button
                     onClick={handleLogin}
                     className="w-full px-6 py-3 bg-[#1479c9] text-white font-bold rounded-lg hover:bg-[#0d6bab] transition-all transform hover:-translate-y-1"
