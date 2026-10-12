@@ -4,7 +4,7 @@ import { ThemeToggle } from "./ThemeToggle"
 const navigation = [
   { name: "Inicio", href: "/home" },
   { name: "Dashboard", href: "/dashboard"},
-  { name: "Sensors", href: "/sensors" },
+  { name: "Sensores", href: "/sensors" },
   { name: "Intervenciones", href: "/interventions" },
   { name: "Mediciones", href: "/measurements" },
   { name: "Sitios", href: "/sites"}
