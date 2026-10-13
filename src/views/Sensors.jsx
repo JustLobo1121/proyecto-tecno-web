@@ -119,7 +119,7 @@ export default function Sensors() {
                     return (
                       <tr key={id} className="border-b">
                         <td className="py-2 pr-4">{id}</td>
-                        <td className="py-2 pr-4">{s.name}</td>
+                        <td className="py-2 pr-4">{s.sensor_name}</td>
                         <td className="py-2 pr-4">{s.site_id}</td>
                         <td className="py-2 pr-4">{s.position}</td>
                         <td className="py-2 pr-4">
