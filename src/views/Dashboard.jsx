@@ -10,11 +10,13 @@ export default function Dashboard() {
     Promise.all([
       getSensors({ status: "no_data", page_size: 1 }),
       getSensors({ status: "out_of_range", page_size: 1 }),
+      getSensors({ status: "ok", page_size: 1 }),
     ])
-      .then(([noSignal, outOfRange]) => {
+      .then(([noSignal, outOfRange, ok]) => {
         setCounts({
           noSignal: noSignal.meta.totalCount,
           outOfRange: outOfRange.meta.totalCount,
+          ok: ok.meta.totalCount,
         });
       })
       .catch((err) => setError(err.message));
@@ -36,6 +38,11 @@ export default function Dashboard() {
         <Link to="/sensors?status=out_of_range" className="rounded-lg border p-4 hover:shadow">
           <p className="text-sm text-gray-500">Fuera de rango</p>
           <p className="text-4xl font-bold">{counts.outOfRange}</p>
+        </Link>
+
+        <Link to="/sensors?status=ok" className="rounded-lg border p-4 hover:shadow">
+          <p className="text-sm text-gray-500">Operativos</p>
+          <p className="text-4xl font-bold">{counts.ok}</p>
         </Link>
       </div>
     </div>
