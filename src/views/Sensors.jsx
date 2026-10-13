@@ -11,9 +11,9 @@ const STATUS_LABELS = {
 };
 
 const STATUS_STYLES = {
-  ok: "bg-green-100 text-green-800",
-  out_of_range: "bg-yellow-100 text-yellow-800",
-  no_data: "bg-red-100 text-red-800",
+  ok: "bg-green-100 text-green-800 dark:bg-green-300 dark:text-green-1000",
+  out_of_range: "bg-yellow-100 text-yellow-800 dark:bg-yellow-300 dark:text-yellow-1000",
+  no_data: "bg-red-100 text-red-800 dark:bg-red-300 dark:text-red-1000",
 };
 
 export default function Sensors() {
