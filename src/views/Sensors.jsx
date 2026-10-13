@@ -16,6 +16,8 @@ const STATUS_STYLES = {
   no_data: "bg-red-100 text-red-800 dark:bg-red-300 dark:text-red-1000",
 };
 
+const mapping = [{name: "jaula", string: "Jaula"}, {name: "ponton", string: "Pontón"}]
+
 export default function Sensors() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -97,7 +99,7 @@ export default function Sensors() {
             // This dynamically generates the list of available positions depending on the current PAGE_SIZE
             // queried sensors instead of statically defining the available ones.
             // (that's bad practice, we don't know if another position may exist or not)
-            [...new Set(allSensors.map((s) => s.position))].map((s) => <option value={s}>{s}</option>)
+            [...new Set(allSensors.map((s) => s.position))].map((s) => <option value={s}>{mapping.find((e) => e.name === s) ? mapping.find((e) => e.name === s).string : s}</option>)
           }
         </select>
       </div>
@@ -129,7 +131,7 @@ export default function Sensors() {
                         <td className="py-2 pr-4">{id}</td>
                         <td className="py-2 pr-4">{s.sensor_name}</td>
                         <td className="py-2 pr-4">{s.site_id}</td>
-                        <td className="py-2 pr-4">{s.position}</td>
+                        <td className="py-2 pr-4">{mapping.find((e) => e.name === s.position) ? mapping.find((e) => e.name === s.position).string : s.position}</td>
                         <td className="py-2 pr-4">
                           <span
                             className={`rounded px-2 py-1 text-sm ${
