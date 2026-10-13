@@ -1,7 +1,7 @@
 import { getSites } from '../api/sites'
 import { useEffect, useState } from 'react'
 import { CardSites } from '../components/Cards'
-import { MapContainer, Marker, TileLayer } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet/dist/leaflet.js'
 
@@ -85,16 +85,20 @@ function Sites() {
                                         {dataModal.active ? 'Operativo' : 'Inactivo'}
                                     </span>
                                 </p>
-                                <p><strong>Latitud:</strong> {dataModal.latitude}</p>
-                                <p><strong>Longitud:</strong> {dataModal.longitude}</p>
                             </div>
                             <div className="p-5 space-y-3 text-gray-700 dark:text-gray-300">
+                                <p><strong>Ubicación</strong></p>
                                 <MapContainer center={[dataModal.latitude, dataModal.longitude]} zoom={8} scrollWheelZoom={false} style={{height: 300}}>
                                     <TileLayer
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     />
                                     <Marker position={[dataModal.latitude, dataModal.longitude]}>
+                                        <Popup>
+                                            Latitud: {dataModal.latitude}
+                                            <br></br>
+                                            Longitud: {dataModal.longitude}
+                                        </Popup>
                                     </Marker>
                             </MapContainer>
                             </div>
