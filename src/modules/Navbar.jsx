@@ -2,8 +2,7 @@ import { NavLink } from "react-router-dom"
 import { ThemeToggle } from "./ThemeToggle"
 
 const navigation = [
-  { name: "Home", href: "/home" },
-  { name: "Dashboard", href: "/dashboard"},
+  { name: "home", href: "/home"},
   { name: "Sensors", href: "/sensors" },
   { name: "Interventions", href: "/interventions" },
   { name: "Measurements", href: "/measurements" },
