@@ -1,4 +1,62 @@
+import { useEffect, useState } from 'react'
+import { apiFetch } from '../api/client'
+
 function Interventions() {
+    const [interventions, setInterventions] = useState([])
+    const [error, setError] = useState(null)
+    const [statusFilter, setStatusFilter] = useState('')
+
+    const [showModal, setShowModal] = useState(false)
+    const [targetType, setTargetType] = useState('site')
+    const [targetId, setTargetId] = useState('')
+    const [reason, setReason] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+
+    const loadInterventions = () => {
+        const query = statusFilter ? `?status=${statusFilter}` : ''
+        apiFetch(`/interventions${query}`)
+            .then((res) => {
+                setInterventions(res.data || res || [])
+            })
+            .catch((err) => setError(err.message))
+    }
+
+    useEffect(() => {
+        loadInterventions()
+    }, [statusFilter])
+
+    const handleOpenModal = () => setShowModal(true)
+    const handleCloseModal = () => {
+        setShowModal(false)
+        setTargetId('')
+        setReason('')
+    }
+
+    const handleCreateIntervention = (e) => {
+        e.preventDefault()
+        if (!targetId || !reason) return
+
+        setSubmitting(true)
+        apiFetch('/interventions', {
+            method: 'POST',
+            body: JSON.stringify({
+                type: targetType,
+                target_id: targetId,
+                reason: reason,
+                status: 'abierto',
+                date: new Date().toISOString()
+            })
+        })
+            .then(() => {
+                handleCloseModal()
+                loadInterventions()
+            })
+            .catch((err) => alert('Error: ' + err.message))
+            .finally(() => setSubmitting(false))
+    }
+
+    if (error) return <p className="p-8 text-red-500">{error}</p>
+
     return (
         <div className="p-8 text-gray-800 dark:text-gray-100">
             <div className="flex justify-between items-center mb-6">
@@ -57,7 +115,7 @@ function Interventions() {
                     </tbody>
                 </table>
             </div>
-                        {/* Modal de Registro Estilo*/}
+                        {/* Modal de Registro Estilo Copiado*/}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
