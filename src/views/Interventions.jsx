@@ -1,7 +1,149 @@
 function Interventions() {
     return (
-        <div className="p-8 text-2xl font-bold">
-            <h1>En construcción</h1>
+        <div className="p-8 text-gray-800 dark:text-gray-100">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-white">Intervenciones</h2>
+                    <p className="text-gray-400 text-sm mt-1">Historial y reportes.</p>
+                </div>
+                <button onClick={handleOpenModal} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm shadow-md">
+                    + Abrir Intervención
+                </button>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl mb-6 border dark:border-gray-700">
+                <label className="text-sm font-medium text-gray-400">Filtrar por estado:</label>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white dark:bg-gray-800 border dark:border-gray-700 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    <option value="">Todos los registros</option>
+                    <option value="abierto">Abiertos</option>
+                    <option value="en_progreso">En Progreso</option>
+                    <option value="resuelto">Resueltos</option>
+                </select>
+            </div>
+
+            <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border dark:border-gray-700">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-gray-50 dark:bg-gray-900/50 border-b dark:border-gray-700 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-4">Tipo</th>
+                            <th className="px-6 py-4">ID Elemento</th>
+                            <th className="px-6 py-4">Motivo</th>
+                            <th className="px-6 py-4">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y dark:divide-gray-700 text-sm">
+                        {interventions.length > 0 ? (
+                            interventions.map((item) => (
+                                <tr key={item.id || item._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${item.type === 'site' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                            {item.type === 'site' ? 'Centro' : 'Sensor'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 font-mono font-medium text-white">{item.target_id}</td>
+                                    <td className="px-6 py-4 text-gray-300 max-w-sm truncate">{item.reason}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${item.status === 'abierto' ? 'text-red-500 bg-red-500/10' : item.status === 'en_progreso' ? 'text-blue-500 bg-blue-500/10' : 'text-green-500 bg-green-500/10'}`}>
+                                            {item.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="4" className="text-center py-10 text-gray-500">No hay intervenciones.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+                        {/* Modal de Registro Estilo*/}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+                        <div className="flex justify-between items-center p-5 border-b dark:border-gray-700">
+                            <h3 className="text-xl font-bold dark:text-white">
+                                Abrir Nueva Intervención
+                            </h3>
+                            <button 
+                                onClick={handleCloseModal}
+                                className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold"
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleCreateIntervention}>
+                            <div className="p-5 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Objetivo afectado</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setTargetType('site')}
+                                            className={`py-2 text-sm font-medium rounded-lg border transition-colors ${
+                                                targetType === 'site' ? 'bg-blue-600/10 border-blue-500 text-blue-400' : 'bg-transparent border-gray-700 text-gray-400'
+                                            }`}
+                                        >
+                                            Centro de Cultivo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTargetType('sensor')}
+                                            className={`py-2 text-sm font-medium rounded-lg border transition-colors ${
+                                                targetType === 'sensor' ? 'bg-blue-600/10 border-blue-500 text-blue-400' : 'bg-transparent border-gray-700 text-gray-400'
+                                            }`}
+                                        >
+                                            Sensor
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">ID del Elemento</label>
+                                    <input
+                                        type="text"
+                                        placeholder={targetType === 'site' ? 'Ej: centro-chilo-01' : 'Ej: oxigeno-sensor-4'}
+                                        value={targetId}
+                                        onChange={(e) => setTargetId(e.target.value)}
+                                        className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Motivo / Descripción</label>
+                                    <textarea
+                                        rows="3"
+                                        placeholder="Escribe el problema técnico o la alerta del sensor..."
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
+                                        required
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
+                                <button 
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white text-sm font-semibold rounded-lg transition-colors"
+                                >
+                                    {submitting ? 'Guardando...' : 'Crear'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
