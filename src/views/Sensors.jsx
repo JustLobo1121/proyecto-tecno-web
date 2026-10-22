@@ -16,6 +16,8 @@ const STATUS_STYLES = {
   no_data: "bg-red-100 text-red-800 dark:bg-red-300 dark:text-red-1000",
 };
 
+const mapping = [{name: "jaula", string: "Jaula"}, {name: "ponton", string: "Pontón"}]
+
 export default function Sensors() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -24,6 +26,7 @@ export default function Sensors() {
   const page = Number(searchParams.get("page") ?? 1);
 
   const [sensors, setSensors] = useState([]);
+  const [allSensors, setAllSensors] = useState([]);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,6 +70,8 @@ export default function Sensors() {
 
   const totalPages = meta ? Math.max(1, Math.ceil(meta.totalCount / meta.pageSize)) : 1;
 
+  useEffect(() => {getSensors().then((response) => setAllSensors(response.data))}, []);
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Sensores</h1>
@@ -89,8 +94,13 @@ export default function Sensors() {
           onChange={(e) => updateFilter("position", e.target.value)}
         >
           <option value="">Todas las posiciones</option>
-          <option value="jaula">Jaula</option>
-          <option value="ponton">Pontón</option>
+          {
+            // There is no way to declare const variables in here, so...
+            // This dynamically generates the list of available positions depending on the current PAGE_SIZE
+            // queried sensors instead of statically defining the available ones.
+            // (that's bad practice, we don't know if another position may exist or not)
+            [...new Set(allSensors.map((s) => s.position))].map((s) => <option value={s}>{mapping.find((e) => e.name === s) ? mapping.find((e) => e.name === s).string : s}</option>)
+          }
         </select>
       </div>
 
@@ -121,7 +131,7 @@ export default function Sensors() {
                         <td className="py-2 pr-4">{id}</td>
                         <td className="py-2 pr-4">{s.sensor_name}</td>
                         <td className="py-2 pr-4">{s.site_id}</td>
-                        <td className="py-2 pr-4">{s.position}</td>
+                        <td className="py-2 pr-4">{mapping.find((e) => e.name === s.position) ? mapping.find((e) => e.name === s.position).string : s.position}</td>
                         <td className="py-2 pr-4">
                           <span
                             className={`rounded px-2 py-1 text-sm ${
