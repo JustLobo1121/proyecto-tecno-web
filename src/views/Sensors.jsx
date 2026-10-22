@@ -3,36 +3,62 @@ import { getSensors } from '../api/sensors'
 import { CardSensors } from '../components/Cards'
 
 function Sensors() {
-    const [active, setActive] = useState([])
-    const [outRange, setOutRange] = useState([])
-    const [noData, setNoData] = useState([])
+    const PAGE_SIZE = 15
+    const [sensors, setSensors] = useState([])
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-
-    const [showModal, setShowModal] = useState(false)
-    const [dataModal, setDataModal] = useState(null)
-
     const [filterStatus, setFilterStatus] = useState('all')
     const [filterPosition, setFilterPosition] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [hasNextPage, setHasNextPage] = useState(false)
+    const [totalItems, setTotalItems] = useState(0)
+    const [showModal, setShowModal] = useState(false)
+    const [dataModal, setDataModal] = useState(null)
 
     useEffect(() => {
-        Promise.all([
-            getSensors({ status: 'no_data'}),
-            getSensors({ status: 'ok'}),
-            getSensors({ status: 'out_of_range'})
-        ]).then(([noDataRes, okRes, noRangeRes]) => {
-            setNoData(noDataRes.data || [])
-            setActive(okRes.data || [])
-            const sortedOutRange = (noRangeRes.data || []).sort((a, b) => {
-                if (!a.last_reading || !b.last_reading) return 0;
-                const devA = Math.max(0, a.oxygen_min - a.last_reading.value, a.last_reading.value - a.oxygen_max)
-                const devB = Math.max(0, b.oxygen_min - b.last_reading.value, b.last_reading.value - b.oxygen_max)
-                return devB - devA
-            })
-            setOutRange(sortedOutRange)
+        const fetchPaginatedSensors = async () => {
+            setLoading(true)
+            try {
+                const params = { 
+                    page: currentPage, 
+                    page_size: PAGE_SIZE 
+                }
+                if (filterStatus !== 'all') params.status = filterStatus
+                if (filterPosition !== 'all') params.position = filterPosition
+                if (searchTerm) params.search = searchTerm
+                const response = await getSensors(params)
+                setSensors(response.data || response)
+                setHasNextPage((response.data || []).length === PAGE_SIZE)
+                setTotalItems(response.total || response.data?.length || 0)
 
-        }).catch((err) => setError(err.message))
-    }, [])
+            } catch (err) {
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
+        }
+        const delayDebounce = setTimeout(() => {
+            fetchPaginatedSensors()
+        }, 300)
+
+        return () => clearTimeout(delayDebounce)
+    }, [currentPage, filterStatus, filterPosition, searchTerm])
+
+    const handleFilterStatus = (e) => {
+        setFilterStatus(e.target.value)
+        setCurrentPage(1)
+    }
+
+    const handleFilterPosition = (e) => {
+        setFilterPosition(e.target.value)
+        setCurrentPage(1)
+    }
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value)
+        setCurrentPage(1)
+    }
 
     const handleOpenModal = (siteData) => {
         setDataModal(siteData)
@@ -46,41 +72,33 @@ function Sensors() {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.key === 'Escape') handleCloseModal();
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    const applyFilters = (sensorsList) => {
-        return sensorsList.filter((sensor) => {
-            const matchPosition = filterPosition === 'all' || sensor.position === filterPosition
-            const matchSearch = sensor.sensor_name.toLowerCase().includes(searchTerm.toLowerCase())
-            return matchPosition && matchSearch
-        })
-    }
+            if (e.key === 'Escape') handleCloseModal()
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
     if (error) return <p className="p-8 text-red-500">{error}</p>
 
     return (
         <div className="p-8">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 shrink-0">
                 <div>
                     <h2 className="text-2xl font-bold dark:text-white">Sensores Registrados</h2>
-                    <p className="text-gray-500 text-sm">Monitoreo de estado y mediciones</p>
+                    <p className="text-gray-500 text-sm">Mostrando {sensors.length} de {totalItems} sensores</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <input 
                         type="text" 
                         placeholder="Buscar por nombre..." 
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[200px] flex-grow sm:flex-grow-0"
+                        onChange={handleSearch}
+                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[200px] flex-grow sm:flex-grow-0 text-sm"
                     />
                     <select 
                         value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px]"
+                        onChange={handleFilterStatus}
+                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
                     >
                         <option value="all">Todos los Estados</option>
                         <option value="ok">Solo OK</option>
@@ -89,8 +107,8 @@ function Sensors() {
                     </select>
                     <select 
                         value={filterPosition}
-                        onChange={(e) => setFilterPosition(e.target.value)}
-                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px]"
+                        onChange={handleFilterPosition}
+                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
                     >
                         <option value="all">Todas las Posiciones</option>
                         <option value="jaula">Jaula</option>
@@ -98,54 +116,49 @@ function Sensors() {
                     </select>
                 </div>
             </div>
-            {(filterStatus === 'all' || filterStatus === 'no_data') && (
-                <div className="mb-10">
-                    <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 bg-gray-500 rounded-full"></span>
-                        Estado: Sin datos ({applyFilters(noData).length})
-                    </h3>
+
+            <div className="flex-1">
+                {loading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 dark:border-white"></div>
+                    </div>
+                ) : sensors.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {applyFilters(noData).map((e) => (
+                        {sensors.map((e) => (
                             <CardSensors key={e.id} data={e} onOpenModal={handleOpenModal} />
                         ))}
-                        {applyFilters(noData).length === 0 && (
-                            <p className="text-gray-500 text-sm">No hay sensores que coincidan con esta búsqueda.</p>
-                        )}
                     </div>
-                </div>
-            )}
-            {(filterStatus === 'all' || filterStatus === 'out_of_range') && (
-                <div className="mb-10">
-                    <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                        Estado: Fuera de rango ({applyFilters(outRange).length})
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {applyFilters(outRange).map((e) => (
-                            <CardSensors key={e.id} data={e} onOpenModal={handleOpenModal} />
-                        ))}
-                        {applyFilters(outRange).length === 0 && (
-                            <p className="text-gray-500 text-sm">No hay sensores que coincidan con esta búsqueda.</p>
-                        )}
+                ) : (
+                    <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                        <p className="text-gray-500 font-medium">No se encontraron sensores con estos filtros.</p>
+                        <button 
+                            onClick={() => { setFilterStatus('all'); setFilterPosition('all'); setSearchTerm(''); setCurrentPage(1); }}
+                            className="mt-3 text-blue-600 hover:underline text-sm"
+                        >
+                            Limpiar filtros
+                        </button>
                     </div>
-                </div>
-            )}
-            {(filterStatus === 'all' || filterStatus === 'ok') && (
-                <div className="mb-10">
-                    <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-                        Estado: OK ({applyFilters(active).length})
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {applyFilters(active).map((e) => (
-                            <CardSensors key={e.id} data={e} onOpenModal={handleOpenModal} />
-                        ))}
-                        {applyFilters(active).length === 0 && (
-                            <p className="text-gray-500 text-sm">No hay sensores que coincidan con esta búsqueda.</p>
-                        )}
-                    </div>
-                </div>
-            )}            
+                )}
+            </div>
+            <div className="flex justify-center items-center gap-4 mt-10 shrink-0 pt-6 border-t dark:border-gray-800">
+                <button 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1 || loading}
+                    className="px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm shadow-sm"
+                    >
+                    Anterior
+                </button>
+                <span className="text-gray-600 text-sm font-medium">
+                    Página {currentPage}
+                </span>
+                <button 
+                    onClick={() => setCurrentPage(prev => prev + 1)}
+                    disabled={!hasNextPage || loading}
+                    className="px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm shadow-sm"
+                    >
+                    Siguiente
+                </button>
+            </div>
             {showModal && dataModal && (
                 <div 
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
