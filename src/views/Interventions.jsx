@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiFetch } from '../api/client'
+import { getInterventions, createIntervention } from '../api/interventions'
 
 function Interventions() {
     const [interventions, setInterventions] = useState([])
@@ -16,21 +16,11 @@ function Interventions() {
     const loadInterventions = async () => {
         setLoading(true)
         setError(null)
-
         try {
-            // Cargar todos los registros y filtrar localmente en React.
-            const res = await apiFetch('/interventions')
-            const records = Array.isArray(res)
-                ? res
-                : Array.isArray(res?.data)
-                    ? res.data
-                    : Array.isArray(res?.items)
-                        ? res.items
-                        : []
-
-            setInterventions(records)
+            const response = await getInterventions({page_size: 20, page: 1})
+            setInterventions(response.data || response)
         } catch (err) {
-            setError(err?.message || 'No se pudieron cargar las intervenciones.')
+            setError(err.message || 'Ocurrió un error al obtener las intervenciones.')
         } finally {
             setLoading(false)
         }
@@ -57,28 +47,27 @@ function Interventions() {
         setTargetId('')
         setReason('')
     }
-
     const handleCreateIntervention = async (e) => {
         e.preventDefault()
         if (!targetId || !reason) return
-
         setSubmitting(true)
-        apiFetch('/interventions', {
-            method: 'POST',
-            body: JSON.stringify({
+        
+        try {
+            await createIntervention({
                 type: targetType,
                 target_id: targetId,
                 reason: reason,
                 status: 'abierto',
                 date: new Date().toISOString()
             })
-        })
-            .then(async () => {
-                handleCloseModal()
-                await loadInterventions()
-            })
-            .catch((err) => alert('Error: ' + err.message))
-            .finally(() => setSubmitting(false))
+
+            handleCloseModal()
+            await loadInterventions()
+        } catch (err) {
+            alert('Error: ' + err.message)
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     return (
@@ -97,9 +86,8 @@ function Interventions() {
                 <label htmlFor="status-filter" className="text-sm font-medium text-gray-600 dark:text-gray-300">Filtrar por estado:</label>
                 <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-white">
                     <option value="">Todos los registros</option>
-                    <option value="abierto">Abiertos</option>
-                    <option value="en_progreso">En Progreso</option>
-                    <option value="resuelto">Resueltos</option>
+                    <option value="open">Abiertos</option>
+                    <option value="closed">Resueltos</option>
                 </select>
             </div>
 
@@ -156,7 +144,6 @@ function Interventions() {
                     </tbody>
                 </table>
             </div>
-                        {/* Modal de Registro Estilo Copiado*/}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
