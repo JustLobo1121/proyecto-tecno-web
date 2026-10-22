@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from "react-router-dom"
 import { getSensors } from '../api/sensors'
 import { CardSensors } from '../components/Cards'
 
 function Sensors() {
+    const [searchParams] = useSearchParams()
     const PAGE_SIZE = 15
     const [sensors, setSensors] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const [filterStatus, setFilterStatus] = useState('all')
+    const [filterStatus, setFilterStatus] = useState(searchParams.get('status'))
     const [filterPosition, setFilterPosition] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
@@ -15,7 +17,7 @@ function Sensors() {
     const [totalItems, setTotalItems] = useState(0)
     const [showModal, setShowModal] = useState(false)
     const [dataModal, setDataModal] = useState(null)
-
+  
     useEffect(() => {
         const fetchPaginatedSensors = async () => {
             setLoading(true)
