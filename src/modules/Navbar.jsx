@@ -2,12 +2,11 @@ import { NavLink } from "react-router-dom"
 import { ThemeToggle } from "./ThemeToggle"
 
 const navigation = [
-  { name: "Inicio", href: "/home" },
-  { name: "Dashboard", href: "/dashboard"},
+  { name: "Inicio", href: "/home"},
   { name: "Sensores", href: "/sensors" },
   { name: "Intervenciones", href: "/interventions" },
-  { name: "Mediciones", href: "/measurements" },
-  { name: "Sitios", href: "/sites"}
+  { name: "Medidas", href: "/measurements" },
+  { name: "Centros", href: "/sites"}
 ]
 
 function Navbar() {
