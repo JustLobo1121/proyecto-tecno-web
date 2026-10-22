@@ -13,7 +13,7 @@ function Login({ setIsAuthenticated }) {
     const handleLoginSuccess = (request) => {
         localStorage.setItem(TOKEN_KEY, request["access_token"])
         setIsAuthenticated(true);
-        navigate("/dashboard");
+        navigate("/home");
     }
 
     const handleLoginFailure = () => {
@@ -31,7 +31,7 @@ function Login({ setIsAuthenticated }) {
     useEffect(() => {
         if (localStorage.getItem(TOKEN_KEY)) {
         setIsAuthenticated(true);
-        navigate("/dashboard");
+        navigate("/home");
     }}, [])
 
     return (
