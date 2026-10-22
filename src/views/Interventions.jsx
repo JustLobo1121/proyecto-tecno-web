@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 function Interventions() {
     const [interventions, setInterventions] = useState([])
     const [error, setError] = useState(null)
+    const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState('')
 
     const [showModal, setShowModal] = useState(false)
@@ -12,18 +13,43 @@ function Interventions() {
     const [reason, setReason] = useState('')
     const [submitting, setSubmitting] = useState(false)
 
-    const loadInterventions = () => {
-        const query = statusFilter ? `?status=${statusFilter}` : ''
-        apiFetch(`/interventions${query}`)
-            .then((res) => {
-                setInterventions(res.data || res || [])
-            })
-            .catch((err) => setError(err.message))
+    const loadInterventions = async () => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            // Cargar todos los registros y filtrar localmente en React.
+            const res = await apiFetch('/interventions')
+            const records = Array.isArray(res)
+                ? res
+                : Array.isArray(res?.data)
+                    ? res.data
+                    : Array.isArray(res?.items)
+                        ? res.items
+                        : []
+
+            setInterventions(records)
+        } catch (err) {
+            setError(err?.message || 'No se pudieron cargar las intervenciones.')
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
         loadInterventions()
-    }, [statusFilter])
+    }, [])
+
+    const normalizeStatus = (status) =>
+        String(status ?? '')
+            .trim()
+            .toLowerCase()
+            .replace(/[ -]+/g, '_')
+
+    const filteredInterventions = interventions.filter((item) => {
+        if (!statusFilter) return true
+        return normalizeStatus(item.status) === statusFilter
+    })
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => {
@@ -32,7 +58,7 @@ function Interventions() {
         setReason('')
     }
 
-    const handleCreateIntervention = (e) => {
+    const handleCreateIntervention = async (e) => {
         e.preventDefault()
         if (!targetId || !reason) return
 
@@ -47,15 +73,13 @@ function Interventions() {
                 date: new Date().toISOString()
             })
         })
-            .then(() => {
+            .then(async () => {
                 handleCloseModal()
-                loadInterventions()
+                await loadInterventions()
             })
             .catch((err) => alert('Error: ' + err.message))
             .finally(() => setSubmitting(false))
     }
-
-    if (error) return <p className="p-8 text-red-500">{error}</p>
 
     return (
         <div className="p-8 text-gray-800 dark:text-gray-100">
@@ -69,15 +93,24 @@ function Interventions() {
                 </button>
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl mb-6 border dark:border-gray-700">
-                <label className="text-sm font-medium text-gray-400">Filtrar por estado:</label>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white dark:bg-gray-800 border dark:border-gray-700 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+            <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl mb-6 border dark:border-gray-700">
+                <label htmlFor="status-filter" className="text-sm font-medium text-gray-600 dark:text-gray-300">Filtrar por estado:</label>
+                <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-white">
                     <option value="">Todos los registros</option>
                     <option value="abierto">Abiertos</option>
                     <option value="en_progreso">En Progreso</option>
                     <option value="resuelto">Resueltos</option>
                 </select>
             </div>
+
+            {error && (
+                <div role="alert" className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                    {error}
+                    <button type="button" onClick={loadInterventions} className="ml-3 font-semibold underline">
+                        Reintentar
+                    </button>
+                </div>
+            )}
 
             <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border dark:border-gray-700">
                 <table className="w-full text-left border-collapse">
@@ -90,9 +123,13 @@ function Interventions() {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-gray-700 text-sm">
-                        {interventions.length > 0 ? (
-                            interventions.map((item) => (
-                                <tr key={item.id || item._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        {loading ? (
+                            <tr>
+                                <td colSpan="4" className="text-center py-10 text-gray-500">Cargando intervenciones...</td>
+                            </tr>
+                        ) : filteredInterventions.length > 0 ? (
+                            filteredInterventions.map((item, index) => (
+                                <tr key={item.id || item._id || `${item.target_id || 'intervention'}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${item.type === 'site' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}`}>
                                             {item.type === 'site' ? 'Centro' : 'Sensor'}
@@ -102,14 +139,18 @@ function Interventions() {
                                     <td className="px-6 py-4 text-gray-300 max-w-sm truncate">{item.reason}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${item.status === 'abierto' ? 'text-red-500 bg-red-500/10' : item.status === 'en_progreso' ? 'text-blue-500 bg-blue-500/10' : 'text-green-500 bg-green-500/10'}`}>
-                                            {item.status}
+                                            {String(item.status || 'sin estado').replace(/[_-]+/g, ' ')}
                                         </span>
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="4" className="text-center py-10 text-gray-500">No hay intervenciones.</td>
+                                <td colSpan="4" className="text-center py-10 text-gray-500">
+                                    {statusFilter
+                                        ? 'No hay intervenciones con ese estado.'
+                                        : 'No hay intervenciones registradas.'}
+                                </td>
                             </tr>
                         )}
                     </tbody>
