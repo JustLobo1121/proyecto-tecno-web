@@ -1,6 +1,6 @@
 export function CardSites({data, onOpenModal}) {
     return (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all rounded-xl p-5">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white m-0">
                 {data.name}
             </h3>
@@ -24,6 +24,11 @@ export const SensorDetailCard = ({ sensor }) => (
         sensor.status === 'out_of_range' 
             ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+    }
+    ${
+        sensor.status === 'no_data'
+        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
     }`}>
         <div className="flex justify-between items-start mb-3">
             <div>

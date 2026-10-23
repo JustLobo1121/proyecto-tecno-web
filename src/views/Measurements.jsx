@@ -1,26 +1,23 @@
-import React from 'react';
-
-// 1. COMPONENTE: CLIMA
 const WeatherCard = () => {
   return (
-    <div className="bg-[#0f172a]/60 border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
+    <div className="border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
         <span className="text-purple-400">🌡️</span> Clima
       </div>
       
       <div className="flex flex-col mb-4">
-        <span className="text-5xl font-black text-white tracking-tight">9.8°C</span>
+        <span className="text-5xl font-black text-gray-500 dark:text-gray-100 tracking-tight">9.8°C</span>
         <span className="text-sm text-slate-400 mt-1">Niebla</span>
       </div>
 
       <div className="space-y-2 text-xs border-b border-slate-800/60 pb-4">
         <div className="flex justify-between">
           <span className="text-slate-400">Sensación</span>
-          <span className="font-bold text-slate-200">8.9°C</span>
+          <span className="font-bold text-gray-500 dark:text-gray-100">8.9°C</span>
         </div>
         <div className="flex justify-between">
           <span className="text-slate-400">Humedad</span>
-          <span className="font-bold text-white">95%</span>
+          <span className="font-bold text-gray-500 dark:text-gray-100">95%</span>
         </div>
         <div className="flex justify-between">
           <span className="text-slate-400">Máx / Mín</span>
@@ -37,10 +34,9 @@ const WeatherCard = () => {
   );
 };
 
-// 2. COMPONENTE: VIENTO
 const WindCard = () => {
   return (
-    <div className="bg-[#0f172a]/60 border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
+    <div className="border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
         <span className="text-cyan-400">💨</span> Viento
       </div>
@@ -67,10 +63,9 @@ const WindCard = () => {
   );
 };
 
-// 3. COMPONENTE: MAREAS
 const TidesCard = () => {
   return (
-    <div className="bg-[#0f172a]/60 border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
+    <div className=" border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
         <span className="text-blue-400">🌊</span> Mareas
       </div>
@@ -79,7 +74,7 @@ const TidesCard = () => {
         <div className="flex justify-between items-start">
           <span className="text-slate-400 font-medium">Pleamar</span>
           <div className="text-right">
-            <p className="font-bold text-white text-sm">05:09 p. m.</p>
+            <p className="font-bold text-gray-500 dark:text-gray-100 text-sm">05:09 p. m.</p>
             <p className="text-cyan-400 text-[11px]">2.2m</p>
           </div>
         </div>
@@ -87,7 +82,7 @@ const TidesCard = () => {
         <div className="flex justify-between items-start">
           <span className="text-slate-400 font-medium">Bajamar</span>
           <div className="text-right">
-            <p className="font-bold text-slate-300 text-sm">10:52 p. m.</p>
+            <p className="font-bold text-gray-500 dark:text-gray-100 text-sm">10:52 p. m.</p>
             <p className="text-slate-400 text-[11px]">0.9m</p>
           </div>
         </div>
@@ -105,10 +100,9 @@ const TidesCard = () => {
   );
 };
 
-// 4. COMPONENTE: PRESIÓN
 const PressureCard = () => {
   return (
-    <div className="bg-[#0f172a]/60 border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
+    <div className="border border-slate-800 rounded-xl p-6 text-slate-300 backdrop-blur-sm">
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
         <span className="text-slate-400">🌐</span> Presión
       </div>
@@ -134,11 +128,9 @@ const PressureCard = () => {
   );
 };
 
-// COMPONENTE CONTENEDOR PRINCIPAL
 function Measurements() {
   return (
-    <div className="min-h-screen bg-[#020617] text-white p-8 font-sans">
-      {/* Encabezado superior */}
+    <div className="min-h-screen text-white p-8 font-sans">
       <div className="mb-8 border-b border-slate-800 pb-4">
         <div className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">
           Condiciones en

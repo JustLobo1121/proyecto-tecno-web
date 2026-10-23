@@ -32,17 +32,17 @@ export default function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Link to="/sensors?status=no_data" className="rounded-lg border p-4 hover:shadow">
           <p className="text-sm text-gray-500">Sin transmitir</p>
-          <p className="text-4xl font-bold">{counts.noSignal}</p>
+          <p className="text-4xl font-bold text-olive-500">{counts.noSignal}</p>
         </Link>
 
         <Link to="/sensors?status=out_of_range" className="rounded-lg border p-4 hover:shadow">
           <p className="text-sm text-gray-500">Fuera de rango</p>
-          <p className="text-4xl font-bold">{counts.outOfRange}</p>
+          <p className="text-4xl font-bold text-rose-600">{counts.outOfRange}</p>
         </Link>
 
         <Link to="/sensors?status=ok" className="rounded-lg border p-4 hover:shadow">
           <p className="text-sm text-gray-500">Operativos</p>
-          <p className="text-4xl font-bold">{counts.ok}</p>
+          <p className="text-4xl font-bold text-emerald-500">{counts.ok}</p>
         </Link>
       </div>
     </div>
