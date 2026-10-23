@@ -119,7 +119,7 @@ function Interventions() {
                             filteredInterventions.map((item, index) => (
                                 <tr key={item.id || item._id || `${item.target_id || 'intervention'}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${item.type === 'site' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${item.type === 'site' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}`}>
                                             {item.type === 'site' ? 'Centro' : 'Sensor'}
                                         </span>
                                     </td>
