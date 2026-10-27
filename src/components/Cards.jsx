@@ -68,14 +68,15 @@ export function CardSensors({ data, onOpenModal }) {
     const isOutOfRange = data.status === 'out_of_range';
 
     return (
-        <div className={`bg-white dark:bg-gray-800 border rounded-xl p-5 hover:shadow-md transition-all ${
-            isOutOfRange ? 'border-red-400 dark:border-red-600 bg-red-50/10' : 'border-gray-200 dark:border-gray-700'
+        <div className={`bg-white dark:bg-gray-800 border rounded-xl p-5 shadow-sm hover:shadow-md transition-all ${
+            isOutOfRange 
+                ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-gray-800' 
+                : 'border-gray-300 dark:border-gray-700'
         }`}>
             <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md uppercase">
                     {data.medition}
                 </span>
-                
                 <span className={`flex items-center gap-1.5 text-xs font-bold ${
                     isOk ? 'text-green-600' : isOutOfRange ? 'text-red-500' : 'text-gray-500'
                 }`}>
@@ -91,9 +92,10 @@ export function CardSensors({ data, onOpenModal }) {
             <p className="text-xs text-gray-500 mt-1 mb-2">
                 Rango seguro: {data.oxygen_min} - {data.oxygen_max} mg/L
             </p>
-
             <div className={`mt-3 p-3 rounded-lg border ${
-                isOutOfRange ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700'
+                isOutOfRange 
+                    ? 'bg-white dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+                    : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'
             }`}>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Última lectura:</p>
                 <div className="flex items-end gap-1">
