@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getInterventions, createIntervention } from '../api/interventions'
+import { getSites } from '../api/sites'
+import { getSensors } from '../api/sensors'
 
 function Interventions() {
     const [interventions, setInterventions] = useState([])
@@ -8,10 +10,13 @@ function Interventions() {
     const [statusFilter, setStatusFilter] = useState('')
 
     const [showModal, setShowModal] = useState(false)
-    const [targetType, setTargetType] = useState('site')
-    const [targetId, setTargetId] = useState('')
     const [reason, setReason] = useState('')
     const [submitting, setSubmitting] = useState(false)
+
+    const [activeSites, setActiveSites] = useState([])
+    const [siteId, setSiteId] = useState(-1)
+    const [sensorId, setSensorId] = useState(-1)
+    const [sensors, setSensors] = useState([])
 
     const loadInterventions = async () => {
         setLoading(true)
@@ -30,6 +35,33 @@ function Interventions() {
         loadInterventions()
     }, [])
 
+    useEffect(() => {
+        Promise.all([
+            getSites({ active: true, page_size: 20, page: 1 }),
+        ])
+            .then(([activeSites]) => {
+                setActiveSites(activeSites.data || [])
+            })
+            .catch((err) => setError(err.message))
+    }, [])
+
+    useEffect(() => {
+        const querySiteSensors = async () => {
+            try {
+                const params = { 
+                    page: 1, 
+                    page_size: 20,
+                    site_id: siteId
+                }
+                const response = await getSensors(params)
+                setSensors(response.data || response)
+            } catch (err) {
+                setError(err.message)
+            }
+        }
+        querySiteSensors()
+    }, [siteId])
+
     const normalizeStatus = (status) =>
         String(status ?? '')
             .trim()
@@ -44,21 +76,21 @@ function Interventions() {
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => {
         setShowModal(false)
-        setTargetId('')
+        setSiteId(-1)
+        setSensorId(-1)
         setReason('')
     }
     const handleCreateIntervention = async (e) => {
+        console.log("uwu")
         e.preventDefault()
-        if (!targetId || !reason) return
+        if (!siteId || !sensorId || !reason) return
         setSubmitting(true)
         
         try {
             await createIntervention({
-                type: targetType,
-                target_id: targetId,
-                reason: reason,
-                status: 'abierto',
-                date: new Date().toISOString()
+                site_id: siteId,
+                sensor_id: sensorId,
+                reason: reason
             })
 
             handleCloseModal()
@@ -158,43 +190,31 @@ function Interventions() {
                                 &times;
                             </button>
                         </div>
-                        
+
                         <form onSubmit={handleCreateIntervention}>
                             <div className="p-5 space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Objetivo afectado</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setTargetType('site')}
-                                            className={`py-2 text-sm font-medium rounded-lg border transition-colors ${
-                                                targetType === 'site' ? 'bg-blue-600/10 border-blue-500 text-blue-400' : 'bg-transparent border-gray-700 text-gray-400'
-                                            }`}
-                                        >
-                                            Centro de Cultivo
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setTargetType('sensor')}
-                                            className={`py-2 text-sm font-medium rounded-lg border transition-colors ${
-                                                targetType === 'sensor' ? 'bg-blue-600/10 border-blue-500 text-blue-400' : 'bg-transparent border-gray-700 text-gray-400'
-                                            }`}
-                                        >
-                                            Sensor
-                                        </button>
-                                    </div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Centro</label>
+                                    <select
+                                    value={siteId}
+                                    onChange={(e) => setSiteId(e.target.value)}
+                                    className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
+                                    >
+                                        <option key={-1} value={-1}>Seleccione un centro...</option>
+                                        {activeSites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
+                                    </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">ID del Elemento</label>
-                                    <input
-                                        type="text"
-                                        placeholder={targetType === 'site' ? 'Ej: centro-chilo-01' : 'Ej: oxigeno-sensor-4'}
-                                        value={targetId}
-                                        onChange={(e) => setTargetId(e.target.value)}
-                                        className="w-full bg-gray-900 border border-gray-700 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                                        required
-                                    />
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Sensor</label>
+                                    <select
+                                    value={sensorId}
+                                    onChange={(e) => setSensorId(e.target.value)}
+                                    className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
+                                    >
+                                        <option key={-1} value={-1}>Seleccione un sensor...</option>
+                                        {sensors.map(sensor => <option key={sensor.id} value={sensor.id}>{sensor.sensor_name}</option>)}
+                                    </select>
                                 </div>
 
                                 <div>
