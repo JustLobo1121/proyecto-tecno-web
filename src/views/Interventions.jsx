@@ -192,7 +192,7 @@ function Interventions() {
                                         placeholder={targetType === 'site' ? 'Ej: centro-chilo-01' : 'Ej: oxigeno-sensor-4'}
                                         value={targetId}
                                         onChange={(e) => setTargetId(e.target.value)}
-                                        className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                                        className="w-full bg-gray-900 border border-gray-700 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                                         required
                                     />
                                 </div>
@@ -201,10 +201,10 @@ function Interventions() {
                                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Motivo / Descripción</label>
                                     <textarea
                                         rows="3"
-                                        placeholder="Escribe el problema técnico o la alerta del sensor..."
+                                        placeholder="Problema técnico o alerta..."
                                         value={reason}
                                         onChange={(e) => setReason(e.target.value)}
-                                        className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
+                                        className="w-full bg-gray-900 border border-gray-700 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
                                         required
                                     ></textarea>
                                 </div>
