@@ -65,9 +65,9 @@ export function CardSensors({ data, onOpenModal }) {
     const isOutOfRange = data.status === 'out_of_range';
 
     return (
-        <div className={`bg-white dark:bg-gray-800 border rounded-xl p-5 hover:shadow-md transition-all ${
+        <div className={`bg-white dark:bg-gray-800 border rounded-xl p-5 hover:shadow-md dark:hover:shadow-blue-600 hover:cursor-pointer transition-all ${
             isOutOfRange ? 'border-red-400 dark:border-red-600 bg-red-50/10' : 'border-gray-200 dark:border-gray-700'
-        }`}>
+        }`} onClick={() => onOpenModal(data)}>
             <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md uppercase">
                     {mapMedition(data.medition)}
@@ -101,16 +101,6 @@ export function CardSensors({ data, onOpenModal }) {
                     </span>
                     {data.medition === 'oxygen' && <span className="text-sm font-semibold text-gray-500 mb-0.5">mg/L</span>}
                 </div>
-            </div>
-            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                <button 
-                    onClick={() => onOpenModal(data)}
-                    className={data.status === 'ok' 
-                        ? "px-4 py-2 bg-lime-600 hover:bg-lime-700 text-white text-sm font-medium rounded-lg transition-colors"
-                        : "px-4 py-2 bg-stone-700 hover:bg-stone-800 text-white text-sm font-medium rounded-lg transition-colors"}
-                >
-                    Ver detalles
-                </button>
             </div>
         </div>
     )
