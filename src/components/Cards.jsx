@@ -1,3 +1,5 @@
+import { mapMedition } from "../api/mappings"
+
 export function CardSites({data, onOpenModal}) {
     return (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-blue-600 hover:cursor-pointer transition-all rounded-xl p-5" onClick={() => onOpenModal(data)}>
@@ -26,7 +28,7 @@ export const SensorDetailCard = ({ sensor }) => (
                     {sensor.sensor_name}
                 </span>
                 <span className="block text-xs text-gray-500 uppercase mt-0.5">
-                    {sensor.medition}
+                    {mapMedition(sensor.medition)}
                 </span>
             </div>
             <div className="text-right">
@@ -68,7 +70,7 @@ export function CardSensors({ data, onOpenModal }) {
         }`}>
             <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md uppercase">
-                    {data.medition}
+                    {mapMedition(data.medition)}
                 </span>
                 
                 <span className={`flex items-center gap-1.5 text-xs font-bold ${

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from "react-router-dom"
 import { getSensors } from '../api/sensors'
 import { CardSensors } from '../components/Cards'
+import { mapMedition, mapPosition } from "../api/mappings"
 
 function Sensors() {
     const [searchParams] = useSearchParams()
@@ -186,8 +187,8 @@ function Sensors() {
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div><strong className="block text-gray-500">ID Interno</strong> {dataModal.id}</div>
                                 <div><strong className="block text-gray-500">Sitio Asignado</strong> ID: {dataModal.site_id}</div>
-                                <div><strong className="block text-gray-500">Medición</strong> {dataModal.medition}</div>
-                                <div><strong className="block text-gray-500">Posición</strong> {dataModal.position} ({dataModal.depth}m)</div>
+                                <div><strong className="block text-gray-500">Medición</strong> {mapMedition(dataModal.medition)}</div>
+                                <div><strong className="block text-gray-500">Posición</strong> {mapPosition(dataModal.position)} ({dataModal.depth}m)</div>
                             </div>
                             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
                                 <div className="flex justify-between mb-2">
