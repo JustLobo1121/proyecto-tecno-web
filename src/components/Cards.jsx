@@ -92,7 +92,7 @@ export function CardSensors({ data, onOpenModal }) {
             <div className={`mt-3 p-3 rounded-lg border ${
                 isOutOfRange ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700'
             }`}>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Última lectura:</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Última lectura</p>
                 <div className="flex items-end gap-1">
                     <span className={`text-2xl font-bold leading-none ${
                         isOutOfRange ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-gray-100'

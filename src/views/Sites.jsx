@@ -106,7 +106,7 @@ function Sites() {
                         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
                             <div className="md:w-1/2 p-5 flex flex-col space-y-4 overflow-y-auto border-r dark:border-gray-700">
                                 <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
-                                    <div><span className="font-semibold text-gray-500 block">ID / Código</span> {dataModal.id} - {dataModal.code}</div>
+                                    <div><span className="font-semibold text-gray-500 block">Código</span>{dataModal.code}</div>
                                     <div><span className="font-semibold text-gray-500 block">Área</span> {dataModal.area}</div>
                                 </div>
 
