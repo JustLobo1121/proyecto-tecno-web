@@ -127,7 +127,7 @@ function Interventions() {
                                     <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{item.reason}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${item.status === 'abierto' ? 'text-red-500 bg-red-500/10' : item.status === 'en_progreso' ? 'text-blue-500 bg-blue-500/10' : 'text-green-500 bg-green-500/10'}`}>
-                                            {String(item.status || 'sin estado').replace(/[_-]+/g, ' ')}
+                                            {String(item.status === 'open' ? 'Abierto' : item.status === 'closed' ? 'Cerrado' : 'Sin estado').replace(/[_-]+/g, ' ')}
                                         </span>
                                     </td>
                                 </tr>
