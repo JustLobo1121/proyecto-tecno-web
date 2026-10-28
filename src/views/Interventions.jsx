@@ -46,6 +46,8 @@ function Interventions() {
     }, [])
 
     useEffect(() => {
+        // No site chosen if this is the case
+        if (siteId === -1) return
         const querySiteSensors = async () => {
             try {
                 const params = { 
