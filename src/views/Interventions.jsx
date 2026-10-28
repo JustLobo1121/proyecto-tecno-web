@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getInterventions, createIntervention } from '../api/interventions'
 import { getSites } from '../api/sites'
 import { getSensors } from '../api/sensors'
+import { mapOutcome } from '../api/mappings'
 
 function Interventions() {
     const [interventions, setInterventions] = useState([])
@@ -37,7 +38,7 @@ function Interventions() {
 
     useEffect(() => {
         Promise.all([
-            getSites({ active: true, page_size: 20, page: 1 }),
+            getSites({ page_size: 20, page: 1 }),
         ])
             .then(([activeSites]) => {
                 setActiveSites(activeSites.data || [])
@@ -138,10 +139,11 @@ function Interventions() {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-50 dark:bg-gray-900/50 border-b dark:border-gray-700 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                            <th className="px-6 py-4">Tipo</th>
-                            <th className="px-6 py-4">ID Elemento</th>
+                            <th className="px-6 py-4">Sitio</th>
                             <th className="px-6 py-4">Motivo</th>
                             <th className="px-6 py-4">Estado</th>
+                            <th className="px-6 py-4">Resultado</th>
+                            <th className="px-6 py-4">Observaciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-gray-700 text-sm">
@@ -152,18 +154,19 @@ function Interventions() {
                         ) : filteredInterventions.length > 0 ? (
                             filteredInterventions.map((item, index) => (
                                 <tr key={item.id || item._id || `${item.target_id || 'intervention'}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${item.type === 'site' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'}`}>
-                                            {item.type === 'site' ? 'Centro' : 'Sensor'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 font-mono font-medium text-white">{item.target_id}</td>
+                                    <td className="px-6 py-4 text-white-500 max-w-sm truncate">{activeSites.find((site) => site.id === item.site_id).name}</td>
                                     <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{item.reason}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${item.status === 'abierto' ? 'text-red-500 bg-red-500/10' : item.status === 'en_progreso' ? 'text-blue-500 bg-blue-500/10' : 'text-green-500 bg-green-500/10'}`}>
                                             {String(item.status === 'open' ? 'Abierto' : item.status === 'closed' ? 'Cerrado' : 'Sin estado').replace(/[_-]+/g, ' ')}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 text-gray-500 max-w-sm truncate">
+                                        {item.outcome && <span className="px-2.5 py-1 rounded-full text-xs font-semibold uppercase text-white bg-purple-500">
+                                            {mapOutcome(item.outcome)}
+                                        </span>}
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{item.outcome_notes}</td>
                                 </tr>
                             ))
                         ) : (
