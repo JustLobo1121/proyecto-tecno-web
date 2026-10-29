@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getInterventions, createIntervention } from '../api/interventions'
 import { getSites } from '../api/sites'
 import { getSensors } from '../api/sensors'
-import { mapOutcome, mapSites } from '../api/mappings'
+import { mapOutcome, findSites } from '../api/mappings'
 
 function Interventions() {
     const [interventions, setInterventions] = useState([])
@@ -86,7 +86,7 @@ function Interventions() {
     }
     const handleCreateIntervention = async (e) => {
         e.preventDefault()
-        if (!siteId || !sensorId || !reason) return
+        if (siteId == -1 || sensorId == -1 || !reason) return
         setSubmitting(true)
         
         try {
@@ -154,7 +154,7 @@ function Interventions() {
                         ) : filteredInterventions.length > 0 ? (
                             filteredInterventions.map((item, index) => (
                                 <tr key={item.id || item._id || `${item.target_id || 'intervention'}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                    <td className="px-6 py-4 text-white-500 max-w-sm truncate">{mapSites(activeSites, item)}</td>
+                                    <td className="px-6 py-4 text-white-500 max-w-sm truncate">{findSites(activeSites, item)}</td>
                                     <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{item.reason}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${item.status === 'abierto' ? 'text-red-500 bg-red-500/10' : item.status === 'en_progreso' ? 'text-blue-500 bg-blue-500/10' : 'text-green-500 bg-green-500/10'}`}>
