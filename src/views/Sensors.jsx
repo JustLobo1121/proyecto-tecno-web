@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getSensors } from '../api/sensors'
 import { getSite } from '../api/sites'
 import { CardSensors } from '../components/Cards'
 
 function Sensors() {
     const PAGE_SIZE = 15
+    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const siteIdParam = searchParams.get('site_id')
+    
+    const [filterSiteName, setFilterSiteName] = useState('')
     
     const [noDataSensors, setNoDataSensors] = useState([])
     const [outRangeSensors, setOutRangeSensors] = useState([])
@@ -25,12 +31,31 @@ function Sensors() {
     const [dataModal, setDataModal] = useState(null)
 
     useEffect(() => {
+        if (siteIdParam) {
+            const fetchSiteName = async () => {
+                try {
+                    const response = await getSite(siteIdParam)
+                    const siteData = response.data || response
+                    setFilterSiteName(siteData.name)
+                } catch (err) {
+                    console.error("Error obteniendo el nombre del centro", err)
+                    setFilterSiteName(`ID: ${siteIdParam}`)
+                }
+            }
+            fetchSiteName()
+        } else {
+            setFilterSiteName('')
+        }
+    }, [siteIdParam])
+
+    useEffect(() => {
         const fetchSensors = async () => {
             setLoading(true)
             try {
                 const baseParams = {}
                 if (filterPosition !== 'all') baseParams.position = filterPosition
                 if (searchTerm) baseParams.search = searchTerm
+                if (siteIdParam) baseParams.site_id = siteIdParam
 
                 const promises = []
 
@@ -62,10 +87,10 @@ function Sensors() {
                 setNoDataSensors(noDataRes.data || noDataRes || [])
                 
                 const sortedOut = (outRangeRes.data || outRangeRes || []).sort((a, b) => {
-                    if (!a.last_reading || !b.last_reading) return 0;
-                    const devA = Math.max(0, a.oxygen_min - a.last_reading.value, a.last_reading.value - a.oxygen_max);
-                    const devB = Math.max(0, b.oxygen_min - b.last_reading.value, b.last_reading.value - b.oxygen_max);
-                    return devB - devA; 
+                    if (!a.last_reading || !b.last_reading) return 0
+                    const devA = Math.max(0, a.oxygen_min - a.last_reading.value, a.last_reading.value - a.oxygen_max)
+                    const devB = Math.max(0, b.oxygen_min - b.last_reading.value, b.last_reading.value - b.oxygen_max)
+                    return devB - devA
                 })
                 setOutRangeSensors(sortedOut)
                 
@@ -86,27 +111,21 @@ function Sensors() {
         }, 300)
 
         return () => clearTimeout(delayDebounce)
-    }, [currentPage, filterStatus, filterPosition, searchTerm]) 
+    }, [currentPage, filterStatus, filterPosition, searchTerm, siteIdParam])
 
-    const handleFilterStatus = (e) => {
-        setFilterStatus(e.target.value)
+    const handleClearAllFilters = () => {
+        setFilterStatus('all')
+        setFilterPosition('all')
+        setSearchTerm('')
         setCurrentPage(1)
-    }
-
-    const handleFilterPosition = (e) => {
-        setFilterPosition(e.target.value)
-        setCurrentPage(1)
-    }
-
-    const handleSearch = (e) => {
-        setSearchTerm(e.target.value)
-        setCurrentPage(1)
+        if (siteIdParam) {
+            setSearchParams({})
+        }
     }
 
     const handleOpenModal = async (sensorData) => {
         setDataModal({ ...sensorData, site_name: 'Cargando...' })
         setShowModal(true)
-
         try {
             const siteResponse = await getSite(sensorData.site_id)
             const siteData = siteResponse.data || siteResponse
@@ -132,26 +151,46 @@ function Sensors() {
 
     if (error) return <p className="p-8 text-red-500">{error}</p>
 
-    const allDisplayedSensors = [...noDataSensors, ...outRangeSensors, ...okSensors];
+    const allDisplayedSensors = [...outRangeSensors, ...noDataSensors, ...okSensors]
 
     return (
-        <div className="p-8 bg-gray-50 dark:bg-gray-900">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 shrink-0">
+        <div className="p-8">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 shrink-0">
                 <div>
-                    <h2 className="text-2xl font-bold dark:text-white">Sensores Registrados</h2>
-                    <p className="text-gray-500 text-sm">Mostrando {allDisplayedSensors.length} sensores (Sensores en estado 'sin transmitir' y 'fuera de rango' se muestran arriba siempre independiente de la pagina)</p>
+                    <h2 className="text-2xl font-bold dark:text-white flex items-center gap-3">
+                        Sensores Registrados
+                        {siteIdParam && (
+                            <span className="text-xs px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full flex items-center gap-2 border border-blue-200 dark:border-blue-800">
+                                Filtrando por Centro: <span className="font-bold">{filterSiteName || 'Cargando...'}</span>
+                                <button 
+                                    onClick={() => setSearchParams({})} 
+                                    className="ml-1 text-blue-500 hover:text-red-500 transition-colors bg-white dark:bg-gray-800 rounded-full w-4 h-4 flex items-center justify-center font-bold"
+                                >
+                                    &times;
+                                </button>
+                            </span>
+                        )}
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-1">Mostrando {allDisplayedSensors.length} sensores</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <input 
                         type="text" 
                         placeholder="Buscar por nombre..." 
                         value={searchTerm}
-                        onChange={handleSearch}
+                        onChange={(e) => { 
+                            setSearchTerm(e.target.value)
+                            setCurrentPage(1)
+
+                        }}
                         className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[200px] flex-grow sm:flex-grow-0 text-sm"
                     />
                     <select 
                         value={filterStatus}
-                        onChange={handleFilterStatus}
+                        onChange={(e) => { 
+                            setFilterStatus(e.target.value)
+                            setCurrentPage(1)
+                        }}
                         className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
                     >
                         <option value="all">Todos los Estados</option>
@@ -161,7 +200,10 @@ function Sensors() {
                     </select>
                     <select 
                         value={filterPosition}
-                        onChange={handleFilterPosition}
+                        onChange={(e) => { 
+                            setFilterPosition(e.target.value)
+                            setCurrentPage(1)
+                        }}
                         className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
                     >
                         <option value="all">Todas las Posiciones</option>
@@ -170,7 +212,6 @@ function Sensors() {
                     </select>
                 </div>
             </div>
-
             <div className="flex-1">
                 {loading ? (
                     <div className="flex justify-center items-center py-20">
@@ -186,10 +227,10 @@ function Sensors() {
                     <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
                         <p className="text-gray-500 font-medium">No se encontraron sensores con estos filtros.</p>
                         <button 
-                            onClick={() => { setFilterStatus('all'); setFilterPosition('all'); setSearchTerm(''); setCurrentPage(1); }}
+                            onClick={handleClearAllFilters}
                             className="mt-3 text-blue-600 hover:underline text-sm"
                         >
-                            Limpiar filtros
+                            Limpiar todos los filtros
                         </button>
                     </div>
                 )}
@@ -233,8 +274,19 @@ function Sensors() {
                         <div className="p-5 space-y-4 text-gray-700 dark:text-gray-300">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <strong className="block text-gray-500">Centro Asignado</strong> 
-                                    <span className="text-gray-900 dark:text-white font-medium">{dataModal.site_name}</span>
+                                    <strong className="block text-gray-500 mb-1">Centro Asignado</strong> 
+                                    <button 
+                                        onClick={() => {
+                                            handleCloseModal()
+                                            navigate(`/sites/${dataModal.site_id}`)
+                                        }}
+                                        title="Ir a la vista de Centros"
+                                        className="group flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors text-left focus:outline-none"
+                                    >
+                                        <span className="underline decoration-transparent group-hover:decoration-current underline-offset-2 transition-all">
+                                            {dataModal.site_name}
+                                        </span>
+                                    </button>
                                 </div>
                                 <div><strong className="block text-gray-500">Medición</strong> {dataModal.medition}</div>
                                 <div><strong className="block text-gray-500">Posición</strong> {dataModal.position} ({dataModal.depth}m)</div>

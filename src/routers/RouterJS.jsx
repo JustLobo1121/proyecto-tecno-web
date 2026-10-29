@@ -7,6 +7,7 @@ import Dashboard from '../views/Dashboard'
 import Measurements from "../views/Measurements"
 import Interventions from "../views/Interventions"
 import Sites from "../views/Sites"
+import SitesDetailed from "../views/SitesDetailed"
 import ErrorView from '../views/error'
 
 function RouterJS() {
@@ -20,6 +21,7 @@ function RouterJS() {
                 <Route path="/measurements" element={ <Measurements /> } />
                 <Route path="/interventions" element={ <Interventions /> } />
                 <Route path="/sites" element={ <Sites /> } />
+                <Route path="/sites/:id" element={ <SitesDetailed /> } />
             </Route>
             <Route path="*" element={ <ErrorView /> }/>
         </Routes>
