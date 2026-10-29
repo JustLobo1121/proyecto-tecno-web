@@ -23,3 +23,9 @@ export function mapOutcome(value) {
 export function mapPosition(value) {
     return map(positions, value)
 }
+
+// Specific to Interventions, avoids a race condition in which the array is empty
+export function mapSites(array, item) {
+    const element = array.map((site) => site.id === item.site_id)
+    return element ? element.name : ""
+}
