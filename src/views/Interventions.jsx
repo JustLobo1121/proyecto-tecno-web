@@ -81,6 +81,7 @@ function Interventions() {
         setShowModal(false)
         setSiteId(-1)
         setSensorId(-1)
+        setSensors([])
         setReason('')
     }
     const handleCreateIntervention = async (e) => {
