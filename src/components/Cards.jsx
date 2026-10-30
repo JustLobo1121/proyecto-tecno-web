@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getSite } from '../api/sites'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 
@@ -99,7 +98,6 @@ export function CardSites({ data, onOpenModal }) {
 }
 
 export function SiteDetailedModalContent({ detailedData, onClose }) {
-    const navigate = useNavigate()
     let sensorSummary = { ok: 0, out_of_range: 0, no_data: 0 }
     if (detailedData && detailedData.sensors) {
         detailedData.sensors.forEach(sensor => {
@@ -146,12 +144,6 @@ export function SiteDetailedModalContent({ detailedData, onClose }) {
                                 <span className="font-bold text-gray-900 dark:text-white">{sensorSummary.no_data}</span>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => navigate(`/sensors?site_id=${detailedData.id}`)}
-                            className="mt-5 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                            Ver Todos los Sensores
-                        </button>
                     </div>
                     <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 h-64 shrink-0">
                         <MapContainer center={[detailedData.latitude, detailedData.longitude]} zoom={8} scrollWheelZoom={false} style={{height: '100%', width: '100%'}}>

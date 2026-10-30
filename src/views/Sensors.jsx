@@ -8,7 +8,7 @@ function Sensors() {
     const PAGE_SIZE = 15
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
-    const siteIdParam = searchParams.get('site_id')
+    const statusParam = searchParams.get('status')
     
     const [filterSiteName, setFilterSiteName] = useState('')
     
@@ -19,7 +19,7 @@ function Sensors() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     
-    const [filterStatus, setFilterStatus] = useState('all')
+    const [filterStatus, setFilterStatus] = useState(statusParam || 'all')
     const [filterPosition, setFilterPosition] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     
@@ -31,22 +31,11 @@ function Sensors() {
     const [dataModal, setDataModal] = useState(null)
 
     useEffect(() => {
-        if (siteIdParam) {
-            const fetchSiteName = async () => {
-                try {
-                    const response = await getSite(siteIdParam)
-                    const siteData = response.data || response
-                    setFilterSiteName(siteData.name)
-                } catch (err) {
-                    console.error("Error obteniendo el nombre del centro", err)
-                    setFilterSiteName(`ID: ${siteIdParam}`)
-                }
-            }
-            fetchSiteName()
-        } else {
-            setFilterSiteName('')
+        if (statusParam && statusParam !== filterStatus) {
+            setFilterStatus(statusParam)
+            setCurrentPage(1)
         }
-    }, [siteIdParam])
+    }, [statusParam])
 
     useEffect(() => {
         const fetchSensors = async () => {
@@ -55,7 +44,6 @@ function Sensors() {
                 const baseParams = {}
                 if (filterPosition !== 'all') baseParams.position = filterPosition
                 if (searchTerm) baseParams.search = searchTerm
-                if (siteIdParam) baseParams.site_id = siteIdParam
 
                 const promises = []
 
@@ -111,16 +99,30 @@ function Sensors() {
         }, 300)
 
         return () => clearTimeout(delayDebounce)
-    }, [currentPage, filterStatus, filterPosition, searchTerm, siteIdParam])
+    }, [currentPage, filterStatus, filterPosition, searchTerm])
 
     const handleClearAllFilters = () => {
         setFilterStatus('all')
         setFilterPosition('all')
         setSearchTerm('')
         setCurrentPage(1)
-        if (siteIdParam) {
+        if (statusParam) {
             setSearchParams({})
         }
+    }
+
+    const handleFilterStatusChange = (e) => {
+        const newStatus = e.target.value
+        setFilterStatus(newStatus)
+        setCurrentPage(1)
+        
+        const currentParams = Object.fromEntries([...searchParams])
+        if (newStatus === 'all') {
+            delete currentParams.status
+        } else {
+            currentParams.status = newStatus
+        }
+        setSearchParams(currentParams)
     }
 
     const handleOpenModal = async (sensorData) => {
@@ -158,18 +160,7 @@ function Sensors() {
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 shrink-0">
                 <div>
                     <h2 className="text-2xl font-bold dark:text-white flex items-center gap-3">
-                        Sensores Registrados
-                        {siteIdParam && (
-                            <span className="text-xs px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full flex items-center gap-2 border border-blue-200 dark:border-blue-800">
-                                Filtrando por Centro: <span className="font-bold">{filterSiteName || 'Cargando...'}</span>
-                                <button 
-                                    onClick={() => setSearchParams({})} 
-                                    className="ml-1 text-blue-500 hover:text-red-500 transition-colors bg-white dark:bg-gray-800 rounded-full w-4 h-4 flex items-center justify-center font-bold"
-                                >
-                                    &times;
-                                </button>
-                            </span>
-                        )}
+                        Lista de Sensores
                     </h2>
                     <p className="text-gray-500 text-sm mt-1">Mostrando {allDisplayedSensors.length} sensores</p>
                 </div>
@@ -181,16 +172,12 @@ function Sensors() {
                         onChange={(e) => { 
                             setSearchTerm(e.target.value)
                             setCurrentPage(1)
-
                         }}
                         className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[200px] flex-grow sm:flex-grow-0 text-sm"
                     />
                     <select 
                         value={filterStatus}
-                        onChange={(e) => { 
-                            setFilterStatus(e.target.value)
-                            setCurrentPage(1)
-                        }}
+                        onChange={handleFilterStatusChange}
                         className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
                     >
                         <option value="all">Todos los Estados</option>
@@ -278,7 +265,7 @@ function Sensors() {
                                     <button 
                                         onClick={() => {
                                             handleCloseModal()
-                                            navigate(`/sites/${dataModal.site_id}`)
+                                            navigate(`/sites?site_id=${dataModal.site_id}`)
                                         }}
                                         title="Ir a la vista de Centros"
                                         className="group flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors text-left focus:outline-none"

@@ -4,10 +4,9 @@ import { ThemeToggle } from "./ThemeToggle"
 
 const navigation = [
   { name: "Inicio", href: "/home" },
-  { name: "Sensores", href: "/sensors" },
+  { name: "Centros", href: "/sites" },
   { name: "Intervenciones", href: "/interventions" },
   { name: "Medidas", href: "/measurements" },
-  { name: "Centros", href: "/sites" }
 ]
 
 function Navbar() {
