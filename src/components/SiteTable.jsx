@@ -35,12 +35,12 @@ export function SiteTableRow({ site, summary, onOpenModal }) {
                             <>
                                 {summary.out_of_range > 0 && (
                                     <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-semibold flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-red-500"></span> {summary.out_of_range} Fuera de rango
+                                        <span className="w-2 h-2 rounded-full bg-red-500"></span> {summary.out_of_range} fuera de rango
                                     </span>
                                 )}
                                 {summary.no_data > 0 && (
                                     <span className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 px-2 py-1 rounded text-sm font-semibold flex items-center gap-1.5 border border-gray-200 dark:border-gray-600">
-                                        <span className="w-2 h-2 rounded-full bg-gray-500"></span> {summary.no_data} Sin transmitir
+                                        <span className="w-2 h-2 rounded-full bg-gray-500"></span> {summary.no_data} sin transmitir
                                     </span>
                                 )}
                             </>
@@ -51,7 +51,7 @@ export function SiteTableRow({ site, summary, onOpenModal }) {
             <td className="py-3 px-4 border-b dark:border-gray-600 text-center">
                 <button
                     onClick={() => onOpenModal(site)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition-colors"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition-colors cursor-pointer"
                 >
                     Ver Detalles
                 </button>
