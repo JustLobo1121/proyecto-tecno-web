@@ -1,14 +1,15 @@
 import { getSites, getSite } from '../api/sites'
-import { useEffect, useState } from 'react'
-import { CardSites, SensorDetailCard } from '../components/Cards'
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
-import 'leaflet/dist/leaflet.js'
+import { useEffect, useState, useMemo } from 'react'
+import { SiteTableRow } from '../components/SiteTable'
+import { SiteDetailedModalContent } from '../components/Cards'
 
 function Sites() {
     const [active, setActive] = useState([])
     const [noActive, setNoActive] = useState([])
+    const [sensorSummaries, setSensorSummaries] = useState({})
     const [error, setError] = useState(null)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [sortOrder, setSortOrder] = useState('desc')
 
     const [showModal, setShowModal] = useState(false)
     const [dataModal, setDataModal] = useState(null)
@@ -20,18 +21,46 @@ function Sites() {
             getSites({ active: false, page_size: 20, page: 1 }),
         ])
             .then(([activeSites, inactiveSites]) => {
-                setActive(activeSites.data || [])
-                setNoActive(inactiveSites.data || [])
+                const aSites = activeSites.data || []
+                const nSites = inactiveSites.data || []
+                setActive(aSites)
+                setNoActive(nSites)
+                const allSites = [...aSites, ...nSites]
+                Promise.all(allSites.map(async (site) => {
+                    try {
+                        const response = await getSite(site.id)
+                        const siteData = response.data || response
+                        let ok = 0, out_of_range = 0, no_data = 0
+                        
+                        if (siteData.sensors) {
+                            siteData.sensors.forEach(sensor => {
+                                if (sensor.status === 'ok') ok++
+                                else if (sensor.status === 'out_of_range') out_of_range++
+                                else if (sensor.status === 'no_data') no_data++
+                            })
+                        }
+                        return { id: site.id, summary: { ok, out_of_range, no_data, total: siteData.sensors?.length || 0 } }
+                    } catch (error) {
+                        return { id: site.id, summary: { ok: 0, out_of_range: 0, no_data: 0, total: 0 } }
+                    }
+                })).then(results => {
+                    const summariesObj = {}
+                    results.forEach(res => {
+                        summariesObj[res.id] = res.summary
+                    })
+                    setSensorSummaries(summariesObj)
+                })
             })
             .catch((err) => setError(err.message))
     }, [])
 
-    const handleOpenModal = async (siteData) => {
-        setDataModal(siteData)
+    const handleOpenModal = async (siteBasicData) => {
         setShowModal(true)
         setLoadingDetail(true)
+        setDataModal(null)
+        
         try {
-            const detailResponse = await getSite(siteData.id)
+            const detailResponse = await getSite(siteBasicData.id)
             setDataModal(detailResponse.data || detailResponse)
         } catch (err) {
             console.error("Error cargando el detalle del centro", err)
@@ -43,119 +72,146 @@ function Sites() {
     const handleCloseModal = () => {
         setShowModal(false)
         setDataModal(null)
-        setLoadingDetail(false)
     }
 
-     useEffect(() => {
+    useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.key === 'Escape') handleCloseModal();
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+            if (e.key === 'Escape') handleCloseModal()
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
+    const toggleSortOrder = () => {
+        if (sortOrder === 'default') setSortOrder('desc')
+        else if (sortOrder === 'desc') setSortOrder('asc')
+        else setSortOrder('default')
+    }
+
+    const processedSites = useMemo(() => {
+        const allSites = [
+            ...active.map(site => ({ ...site, isSiteActive: true })),
+            ...noActive.map(site => ({ ...site, isSiteActive: false }))
+        ]
+
+        let filtered = allSites.filter(site => 
+            site.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+
+        if (sortOrder !== 'default') {
+            filtered.sort((a, b) => {
+                const sumA = sensorSummaries[a.id]
+                const sumB = sensorSummaries[b.id]
+
+                if (!sumA || !sumB) return 0
+                const getWeight = (sum) => {
+                    if (sum.total === 0) return 0
+                    if (sum.out_of_range > 0) return 3
+                    if (sum.no_data > 0) return 2
+                    return 1
+                }
+
+                const weightA = getWeight(sumA)
+                const weightB = getWeight(sumB)
+
+                return sortOrder === 'desc' 
+                    ? weightB - weightA 
+                    : weightA - weightB
+            })
+        }
+
+        return filtered
+    }, [active, noActive, searchTerm, sortOrder, sensorSummaries])
+
+    const handleClearAllFilters = () => {
+        setSearchTerm('')
+    }
 
     if (error) return <p className="p-8 text-red-500">{error}</p>
 
     return (
-        <div className="p-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-500">Centros Inactivos</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {noActive.length > 0 ? (
-                    noActive.map((e) => (
-                        <CardSites key={e.id} data={e} onOpenModal={handleOpenModal} />
-                    ))
-                ) : (
-                    <p className="text-gray-500">Actualmente no hay centros inactivos registrados.</p>
-                )}
-            </div>
-            <h2 className="text-2xl font-bold mb-4 mt-8">Centros Activos</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                {active.length > 0 ? (
-                    active.map((e) => (
-                        <CardSites key={e.id} data={e} onOpenModal={handleOpenModal} />
-                    ))
-                ) : (
-                    <p className="text-gray-500">Cargando o no hay centros activos...</p>
-                )}
+        <div className="p-8 w-full">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Lista de Centros</h2>
+                <input
+                    type="text"
+                    placeholder="Buscar centro por nombre..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full md:w-1/3 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                />
             </div>
 
-            {showModal && dataModal && (
+            <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded shadow">
+                <table className="min-w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 select-none">
+                            <th className="py-3 px-4 border-b dark:border-gray-600">Nombre del Centro</th>
+                            <th className="py-3 px-4 border-b dark:border-gray-600">Estado</th>
+                            <th 
+                                className="py-3 px-4 border-b dark:border-gray-600 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                onClick={toggleSortOrder}
+                                title="Clic para ordenar por estado"
+                            >
+                                <div className="flex items-center gap-2">
+                                    Estado de los Sensores
+                                    <span className="text-xs">
+                                        {sortOrder === 'desc' ? '▼' : sortOrder === 'asc' ? '▲' : '↕'}
+                                    </span>
+                                </div>
+                            </th>
+                            <th className="py-3 px-4 border-b dark:border-gray-600 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {processedSites.length > 0 ? (
+                            processedSites.map(site => (
+                                <SiteTableRow 
+                                    key={site.id} 
+                                    site={site} 
+                                    summary={sensorSummaries[site.id]}
+                                    onOpenModal={handleOpenModal} 
+                                />
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="4" className="py-6 text-center text-gray-500 dark:text-gray-400">
+                                    <p className="text-gray-500 font-medium">No se encontraron centros con la busqueda.</p>
+                                    <button 
+                                        onClick={handleClearAllFilters}
+                                        className="mt-3 text-blue-600 hover:underline text-sm"
+                                    >
+                                        Limpiar todos los filtros
+                                    </button>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {showModal && (
                 <div 
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
                     onClick={handleCloseModal}
                 >
                     <div 
-                        className="bg-white dark:bg-gray-800 w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        className="bg-white dark:bg-gray-800 w-full max-w-6xl rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex justify-between items-center p-5 border-b dark:border-gray-700 shrink-0">
-                            <h3 className="text-xl font-bold dark:text-white flex items-center gap-3">
-                                {dataModal.name}
-                                <span className={`text-xs px-2 py-1 rounded-full text-white ${dataModal.active ? 'bg-green-500' : 'bg-red-500'}`}>
-                                    {dataModal.active ? 'Operativo' : 'Inactivo'}
-                                </span>
-                            </h3>
-                            <button 
-                                onClick={handleCloseModal}
-                                className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold leading-none"
-                            >
-                                &times;
-                            </button>
-                        </div>
-                        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-                            <div className="md:w-1/2 p-5 flex flex-col space-y-4 overflow-y-auto border-r dark:border-gray-700">
-                                <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
-                                    <div><span className="font-semibold text-gray-500 block">Código</span>{dataModal.code}</div>
-                                    <div><span className="font-semibold text-gray-500 block">Área</span> {dataModal.area}</div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <h4 className="font-bold text-gray-900 dark:text-white">Ubicación</h4>
-                                    <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 h-100">
-                                        <MapContainer center={[dataModal.latitude, dataModal.longitude]} zoom={8} scrollWheelZoom={false} style={{height: '100%', width: '100%'}}>
-                                            <TileLayer
-                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                            />
-                                            <Marker position={[dataModal.latitude, dataModal.longitude]}>
-                                                <Popup>
-                                                    Latitud: {dataModal.latitude}<br/>
-                                                    Longitud: {dataModal.longitude}
-                                                </Popup>
-                                            </Marker>
-                                        </MapContainer>
-                                    </div>
-                                </div>
+                        {loadingDetail ? (
+                            <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+                                <p>Cargando información de sensores y mapa...</p>
                             </div>
-                            <div className="md:w-1/2 p-5 flex flex-col overflow-y-auto bg-gray-50/50 dark:bg-gray-900/20">
-                                <h4 className="font-bold text-gray-900 dark:text-white border-b dark:border-gray-700 pb-3 mb-4 sticky top-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-10">
-                                    Sensores
-                                </h4>
-
-                                {loadingDetail ? (
-                                    <div className="flex justify-center items-center py-12 flex-1">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col gap-3">
-                                        {
-                                            dataModal.sensors.map((sensor) => (
-                                                <SensorDetailCard key={sensor.id} sensor={sensor} />
-                                            ))
-                                        }
-                                    </div>
-                                )}
+                        ) : dataModal ? (
+                            <SiteDetailedModalContent detailedData={dataModal} onClose={handleCloseModal} />
+                        ) : (
+                            <div className="p-8 text-center text-red-500">
+                                <p>Ocurrió un error al cargar los datos del centro.</p>
+                                <button onClick={handleCloseModal} className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg">Cerrar</button>
                             </div>
-                        </div>
-                        <div className="p-4 border-t dark:border-gray-700 bg-gray-100 dark:bg-gray-900 shrink-0 flex justify-end">
-                            <button 
-                                onClick={handleCloseModal}
-                                className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-                            >
-                                Cerrar
-                            </button>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}
