@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { NavLink } from "react-router-dom"
 import { ThemeToggle } from "./ThemeToggle"
+import { Logout } from "./Logout"
 
 const navigation = [
   { name: "Inicio", href: "/home" },
@@ -63,6 +64,7 @@ function Navbar() {
               )}
             </div>
             <div className="flex items-center gap-4 ml-auto">
+              <Logout />
               <ThemeToggle />
               <div className="flex md:hidden">
                 <button
