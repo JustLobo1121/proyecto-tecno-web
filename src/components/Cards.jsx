@@ -120,12 +120,15 @@ export function SiteDetailedModalContent({ detailedData, onClose }) {
                     </span>
                     <span className="text-sm text-gray-500">{detailedData.area}</span>
                 </div>
-                <button 
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold leading-none"
-                >
-                    &times;
-                </button>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">Código: {detailedData.code}</span>
+                    <button 
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold leading-none"
+                    >
+                        &times;
+                    </button>
+                </div>
             </div>
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-5 gap-6">
                 <div className="md:w-1/3 flex flex-col space-y-6 overflow-y-auto">
@@ -234,7 +237,7 @@ export function CardSensors({ data, onOpenModal }) {
     const isOutOfRange = data.status === 'out_of_range'
 
     return (
-        <div className={`bg-white dark:bg-gray-800 border rounded-xl p-5 shadow-sm hover:shadow-md transition-all ${
+        <div className={`bg-white dark:bg-gray-800 border rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer ${
             isOutOfRange 
                 ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-gray-800' 
                 : 'border-gray-300 dark:border-gray-700'
