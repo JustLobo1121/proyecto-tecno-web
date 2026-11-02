@@ -266,7 +266,7 @@ function Sensors() {
                                     <button 
                                         onClick={() => {
                                             handleCloseModal()
-                                            navigate(`/sites?site_id=${dataModal.site_id}`)
+                                            navigate(`/sites/${dataModal.site_id}`)
                                         }}
                                         title="Ir a la vista de Centros"
                                         className="group flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors text-left focus:outline-none"
