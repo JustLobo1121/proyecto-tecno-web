@@ -121,6 +121,7 @@ export function SiteDetailedModalContent({ detailedData, onClose }) {
                     <span className="text-sm text-gray-500">{detailedData.area}</span>
                 </div>
                 <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">Código: {detailedData.code}</span>
                     <button 
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold leading-none"
