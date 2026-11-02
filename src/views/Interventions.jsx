@@ -8,7 +8,6 @@ function Interventions() {
     const [interventions, setInterventions] = useState([])
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [statusFilter, setStatusFilter] = useState('')
 
     const [showModal, setShowModal] = useState(false)
     const [reason, setReason] = useState('')
@@ -19,12 +18,19 @@ function Interventions() {
     const [sensorId, setSensorId] = useState(-1)
     const [sensors, setSensors] = useState([])
 
+    const PAGE_SIZE = 20;
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(-1);
+
+    const [status, setStatus] = useState(null);
+
     const loadInterventions = async () => {
         setLoading(true)
         setError(null)
         try {
-            const response = await getInterventions({page_size: 20, page: 1})
+            const response = await getInterventions({page_size: PAGE_SIZE, page: currentPage, status: status})
             setInterventions(response.data || response)
+            setTotalPages(Math.ceil(response.meta.totalCount / PAGE_SIZE))
         } catch (err) {
             setError(err.message || 'Ocurrió un error al obtener las intervenciones.')
         } finally {
@@ -34,11 +40,11 @@ function Interventions() {
 
     useEffect(() => {
         loadInterventions()
-    }, [])
+    }, [currentPage, status])
 
     useEffect(() => {
         Promise.all([
-            getSites({ page_size: 20, page: 1 }),
+            getSites({}),
         ])
             .then(([activeSites]) => {
                 setActiveSites(activeSites.data || [])
@@ -64,17 +70,6 @@ function Interventions() {
         }
         querySiteSensors()
     }, [siteId])
-
-    const normalizeStatus = (status) =>
-        String(status ?? '')
-            .trim()
-            .toLowerCase()
-            .replace(/[ -]+/g, '_')
-
-    const filteredInterventions = interventions.filter((item) => {
-        if (!statusFilter) return true
-        return normalizeStatus(item.status) === statusFilter
-    })
 
     const handleOpenModal = () => setShowModal(true)
     const handleCloseModal = () => {
@@ -107,23 +102,25 @@ function Interventions() {
 
     return (
         <div className="p-8 text-gray-800 dark:text-gray-100">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-white">Intervenciones</h2>
-                    <p className="text-gray-400 text-sm mt-1">Historial y reportes.</p>
+            <div className="flex flex-wrap p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl mb-6 border dark:border-gray-700 justify-between">
+                <div className="flex items-center gap-3">
+                    <label htmlFor="status-filter" className="text-sm font-medium text-gray-600 dark:text-gray-300">Filtrar por estado:</label>
+                    <select id="status-filter" value={status} onChange={(e) => {setStatus(e.target.value); setCurrentPage(1)}} className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-white">
+                        <option value="">Todos los registros</option>
+                        <option value="open">Abiertos</option>
+                        <option value="closed">Resueltos</option>
+                    </select>
                 </div>
-                <button onClick={handleOpenModal} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm shadow-md">
-                    + Abrir Intervención
-                </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl mb-6 border dark:border-gray-700">
-                <label htmlFor="status-filter" className="text-sm font-medium text-gray-600 dark:text-gray-300">Filtrar por estado:</label>
-                <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-white">
-                    <option value="">Todos los registros</option>
-                    <option value="open">Abiertos</option>
-                    <option value="closed">Resueltos</option>
-                </select>
+                <div className="flex items-center gap-3">
+                    <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm shadow-md cursor-pointer" onClick={() => {if (currentPage > 1) setCurrentPage(currentPage - 1)}}>Anterior</button>
+                    <span>Página {currentPage} de {totalPages}</span>
+                    <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm shadow-md cursor-pointer" onClick={() => {if (currentPage < totalPages) setCurrentPage(currentPage + 1)}}>Siguiente</button>
+                </div>
+                <div>
+                    <button onClick={handleOpenModal} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm shadow-md cursor-pointer">
+                        + Abrir Intervención
+                    </button>
+                </div>
             </div>
 
             {error && (
@@ -151,14 +148,14 @@ function Interventions() {
                             <tr>
                                 <td colSpan="4" className="text-center py-10 text-gray-500">Cargando intervenciones...</td>
                             </tr>
-                        ) : filteredInterventions.length > 0 ? (
-                            filteredInterventions.map((item, index) => (
+                        ) : interventions.length > 0 ? (
+                            interventions.map((item, index) => (
                                 <tr key={item.id || item._id || `${item.target_id || 'intervention'}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                     <td className="px-6 py-4 text-white-500 max-w-sm truncate">{findSites(activeSites, item)}</td>
                                     <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{item.reason}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${item.status === 'abierto' ? 'text-red-500 bg-red-500/10' : item.status === 'en_progreso' ? 'text-blue-500 bg-blue-500/10' : 'text-green-500 bg-green-500/10'}`}>
-                                            {String(item.status === 'open' ? 'Abierto' : item.status === 'closed' ? 'Cerrado' : 'Sin estado').replace(/[_-]+/g, ' ')}
+                                            {String(item.status === 'open' ? 'Abierta' : item.status === 'closed' ? 'Cerrada' : 'Sin estado').replace(/[_-]+/g, ' ')}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-gray-500 max-w-sm truncate">
@@ -171,8 +168,8 @@ function Interventions() {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="4" className="text-center py-10 text-gray-500">
-                                    {statusFilter
+                                <td colSpan="5" className="text-center py-10 text-gray-500">
+                                    {status
                                         ? 'No hay intervenciones con ese estado.'
                                         : 'No hay intervenciones registradas.'}
                                 </td>

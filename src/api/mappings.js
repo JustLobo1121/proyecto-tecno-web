@@ -1,9 +1,9 @@
 const meditions = [{value: "oxygen", string: "Oxígeno"}]
 const outcomes = [
-    {value: "reconfigured", string: "Reconfigurado"},
-    {value: "replaced", string: "Reemplazado"},
-    {value: "back_online", string: "Operativo"},
-    {value: "no_fault_found", string: "Sin fallas"}
+    {value: "reconfigured", string: "Sensor reconfigurado"},
+    {value: "replaced", string: "Sensor reemplazado"},
+    {value: "back_online", string: "Sensor operativo"},
+    {value: "no_fault_found", string: "Sensor sin fallas"}
 ]
 const positions = [{value: "jaula", string: "Jaula"}, {value: "ponton", string: "Pontón"}]
 
