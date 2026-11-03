@@ -459,16 +459,20 @@ export default function Dashboard() {
     <div className="p-8 bg-gray-50 dark:bg-gray-900">
       <h2 className="text-2xl font-bold mb-6 dark:text-white">Dashboard</h2>
 
-      <div className="grid gap-6 lg:grid-cols-3 mb-6">
-        <div className="flex flex-col justify-center gap-4">
-          <StatusCard status="out_of_range" count={counts.out_of_range} />
-          <StatusCard status="no_data" count={counts.no_data} />
-          <StatusCard status="ok" count={counts.ok} />
+      <div className="mb-6 flex flex-col gap-6">
+        <div className={CARD}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-lg font-bold">Sensores</h3>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatusCard status="out_of_range" count={counts.out_of_range} />
+            <StatusCard status="no_data" count={counts.no_data} />
+            <StatusCard status="ok" count={counts.ok} />
+          </div>
         </div>
-
-        <div className="lg:col-span-2">
+        <div className="w-full">
            <TrendChart sensors={sensors} centers={centers} />
-           </div>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
