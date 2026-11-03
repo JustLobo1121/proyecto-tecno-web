@@ -101,12 +101,6 @@ function SiteDetails() {
                                     <span className="font-bold text-gray-900 dark:text-white">{sensorSummary.no_data}</span>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => navigate(`/sensors?site_id=${siteData.id}`)}
-                                className="mt-6 w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                            >
-                                Filtrar sensores en tabla global
-                            </button>
                         </div>
                         <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 h-72">
                             <MapContainer center={[siteData.latitude, siteData.longitude]} zoom={8} scrollWheelZoom={false} style={{height: '100%', width: '100%'}}>
