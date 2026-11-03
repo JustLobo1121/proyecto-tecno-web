@@ -212,7 +212,7 @@ function WeatherCards({ location }) {
   );
 }
 
-function SensorChart({ id, site }) {
+function SensorChart({ id, site}) {
   const [sensor, setSensor] = useState(null);
   const [points, setPoints] = useState([]);
   const [info, setInfo] = useState({ total: 0, loaded: 0 });
@@ -265,7 +265,7 @@ function SensorChart({ id, site }) {
       });
 
     return () => { cancelled = true; };
-  }, [id, range, ready, lastAt]);
+  }, [id, range, ready, lastAt,tick]);
 
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), REFRESH_MS);
@@ -346,7 +346,7 @@ function SensorChart({ id, site }) {
         ))}
         <button
           onClick={() => setTick((t) => t + 1)}
-          className="ml-auto rounded border px-3 py-1 text-sm dark:text-white"
+        className="ml-auto rounded border px-3 py-1 text-sm dark:text-white cursor-pointer hover:opacity-80"
         >
           Actualizar
         </button>
