@@ -536,16 +536,9 @@ export default function Dashboard() {
                   : siteId != null
                   ? siteName(siteId)
                   : "Sin asignar";
-                const to = sensor
-                  ? `/measurements?site_id=${sensor.site_id}&sensor_id=${sensor.id}`
-                  : siteId != null
-                  ? centerRoute(siteId)
-                  : "/interventions";
 
                 return (
-                  <Link
-                    key={it.id}
-                    to={to}
+                  <div
                     className={`block rounded-lg border px-4 py-3 dark:border-gray-700 ${HOVER}`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -571,7 +564,7 @@ export default function Dashboard() {
                       </p>
                     )}
                     <p className={`mt-1 text-xs ${MUTED}`}>{formatAt(it.at)}</p>
-                  </Link>
+                  </div>
                 );
               })}
             </div>

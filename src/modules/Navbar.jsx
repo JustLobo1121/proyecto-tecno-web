@@ -64,8 +64,8 @@ function Navbar() {
               )}
             </div>
             <div className="flex items-center gap-4 ml-auto">
-              <Logout />
               <ThemeToggle />
+              <Logout />
               <div className="flex md:hidden">
                 <button
                   onClick={() => setIsOpen(!isOpen)}
