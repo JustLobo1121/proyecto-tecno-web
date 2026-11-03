@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 async function populateData(rawData, setData) {
     const data = []
     rawData.data.map((entry) => {
-        data.push({
+        data.unshift({
             x: entry.oxygen,
             date: new Date(Date.parse(entry.timestamp)).toLocaleString("es-CL")
         })
@@ -13,7 +13,7 @@ async function populateData(rawData, setData) {
     // API is of a stack data type. the first entry is the last one
     // ideally .map() shouldnt be used and an interation should begin from the last index
     // tl;dr this is not efficient.
-    setData(data.reverse())
+    setData(data)
 }
 
 export function SensorChart({ sensorData }) {
@@ -25,7 +25,8 @@ export function SensorChart({ sensorData }) {
         getMeasurements({
             sensor_id: sensorData.id,
             from: new Date(currDate.valueOf() - range * 1000).toISOString(), // epochs are in milliseconds in JS!!
-            to: currDate.toISOString()
+            to: currDate.toISOString(),
+            page_size: 1000
         })
     .then((r) => {
         populateData(r, setData)
@@ -42,7 +43,8 @@ export function SensorChart({ sensorData }) {
                 <option value={3600 * 4}>4 horas</option>
                 <option value={3600 * 8}>8 horas</option>
                 <option value={3600 * 24}>1 día</option>
-                <option value={3600 * 168}>1 semana</option>
+                <option value={3600 * 48}>2 días</option>
+                <option value={3600 * 72}>3 días</option>
             </select>
             <Typed.LineChart
             style={{ width: '100%', maxWidth: '700px', height: '100%', maxHeight: '70vh', aspectRatio: 1.618 }}
