@@ -13,7 +13,7 @@ const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 const INTERVENTIONS_SHOWN = 5;
 
-const centerRoute = (id) => `/sites?site_id=${id}`;
+const centerRoute = (id) => `/sites/${id}`;
 
 const STATUS = {
   out_of_range: {

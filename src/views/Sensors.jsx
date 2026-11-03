@@ -259,12 +259,6 @@ function Sensors() {
                                 {dataModal.sensor_name}
                                 {!dataModal.transmitting && <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Sin Señal</span>}
                             </h3>
-                            <button 
-                                onClick={handleCloseModal}
-                                className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold leading-none focus:outline-none"
-                            >
-                                &times;
-                            </button>
                         </div>
                         <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-5 gap-6">
 

@@ -6,8 +6,8 @@ import { Logout } from "./Logout"
 const navigation = [
   { name: "Inicio", href: "/home" },
   { name: "Centros", href: "/sites" },
-  { name: "Intervenciones", href: "/interventions" },
   { name: "Medidas", href: "/measurements" },
+  { name: "Intervenciones", href: "/interventions" },
 ]
 
 function Navbar() {
