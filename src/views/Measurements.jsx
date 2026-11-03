@@ -362,17 +362,26 @@ function SensorChart({ id, site}) {
         <>
           <div style={{ width: "100%", height: 340 }}>
             <ResponsiveContainer>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#9ca3af" strokeOpacity={0.4} />
+              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 35, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#9ca3af" strokeOpacity={0.4} />
                 <XAxis dataKey="time" tickFormatter={formatTime} minTickGap={40} />
-                <YAxis
-                  unit={` ${med.unit}`}
-                  domain={[
-                    (dataMin) => Math.min(dataMin, min ?? dataMin),
-                    (dataMax) => Math.max(dataMax, max ?? dataMax),
-                  ]}
+                  <YAxis
+                    unit={` ${med.unit}`}
+                    width={75}
+                    domain={[
+                      (dataMin) => Math.floor(Math.min(dataMin, min ?? dataMin) * 0.95),
+                      (dataMax) => Math.ceil(Math.max(dataMax, max ?? dataMax) * 1.05),
+                    ]}
+                    tickFormatter={(val) => val.toFixed(1)}
+                  />
+
+                <Tooltip 
+                    labelFormatter={formatTime} 
+                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#4b5563', borderRadius: '8px' }}
+                    labelStyle={{ color: '#ffffff', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#3b82f6' }}
                 />
-                <Tooltip labelFormatter={formatTime} />
+
                 {min != null && (
                   <ReferenceLine y={min} stroke="#dc2626" strokeDasharray="4 4" label="Mín" />
                 )}
