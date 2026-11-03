@@ -376,10 +376,10 @@ function SensorChart({ id, site}) {
                   />
 
                 <Tooltip 
-                    labelFormatter={formatTime} 
-                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#4b5563', borderRadius: '8px' }}
-                    labelStyle={{ color: '#ffffff', fontWeight: 'bold' }}
-                    itemStyle={{ color: '#3b82f6' }}
+                  labelFormatter={formatTime} 
+                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#4b5563', borderRadius: '8px' }}
+                  labelStyle={{ color: '#ffffff', fontWeight: 'bold' }}
+                  itemStyle={{ color: '#3b82f6' }}
                 />
 
                 {min != null && (

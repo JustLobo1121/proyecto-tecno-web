@@ -1,12 +1,15 @@
-import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, createHorizontalChart } from 'recharts';
-import { getMeasurements } from '../api/measurements';
-import { useEffect, useState } from 'react';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, createHorizontalChart } from 'recharts'
+import { getMeasurements } from '../api/measurements'
+import { useEffect, useState } from 'react'
 
 async function populateData(rawData, setData) {
     const data = []
     rawData.data.map((entry) => {
         data.unshift({
-            x: entry.oxygen,
+            oxygen: entry.oxygen,
+            saturation: entry.saturation,
+            temperature: entry.temperature,
+            salinity: entry.salinity,
             date: new Date(Date.parse(entry.timestamp)).toLocaleString("es-CL")
         })
     })
@@ -17,9 +20,9 @@ async function populateData(rawData, setData) {
 }
 
 export function SensorChart({ sensorData }) {
-    const [data, setData] = useState([]);
-    const [range, setRange] = useState(3600 * 24);
-    const Typed = createHorizontalChart()({ XAxis, YAxis, Tooltip, Line });
+    const [data, setData] = useState([])
+    const [range, setRange] = useState(3600 * 24)
+    const Typed = createHorizontalChart()({ XAxis, YAxis, Tooltip, Line })
     const currDate = new Date()
     useEffect(() => {
         getMeasurements({
@@ -36,16 +39,25 @@ export function SensorChart({ sensorData }) {
     })
     }, [range])
     return (
-        <div>
-            <select value={range} onChange={(e) => setRange(e.target.value)}>
-                <option value={3600 * 1}>1 hora</option>
-                <option value={3600 * 2}>2 horas</option>
-                <option value={3600 * 4}>4 horas</option>
-                <option value={3600 * 8}>8 horas</option>
-                <option value={3600 * 24}>1 día</option>
-                <option value={3600 * 48}>2 días</option>
-                <option value={3600 * 72}>3 días</option>
-            </select>
+        <div className="text-gray-900 dark:text-gray-200">
+            <div className="flex justify-start w-1/2">
+                <h3 className="text-gray-900 dark:text-gray-200">Rango de tiempo</h3>
+                <div className="px-4">
+                    <select 
+                    value={range} 
+                    onChange={(e) => setRange(e.target.value)}
+                    className="mb-4 p-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded outline-none"
+                >
+                    <option value={3600 * 1}>1 hora</option>
+                    <option value={3600 * 2}>2 horas</option>
+                    <option value={3600 * 4}>4 horas</option>
+                    <option value={3600 * 8}>8 horas</option>
+                    <option value={3600 * 24}>1 día</option>
+                    <option value={3600 * 48}>2 días</option>
+                    <option value={3600 * 72}>3 días</option>
+                </select>
+                </div>
+            </div>
             <Typed.LineChart
             style={{ width: '100%', maxWidth: '700px', height: '100%', maxHeight: '70vh', aspectRatio: 1.618 }}
             responsive
@@ -58,12 +70,22 @@ export function SensorChart({ sensorData }) {
             }}
             >
             <CartesianGrid />
-            <Typed.XAxis dataKey="date" />
-            <Typed.YAxis width="auto" />
-            <Tooltip />
+            <Typed.XAxis dataKey="date" tick={{ fill: 'currentColor' }} />
+            <Tooltip 
+                contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    borderColor: '#374151',
+                    color: '#f3f4f6',
+                    borderRadius: '0.5rem'
+                }}
+                itemStyle={{ color: '#60a5fa' }}
+            />
             <Legend />
-            <Typed.Line dataKey="x" name="Oxígeno" unit=" mg/L"/>
+            <Typed.Line dataKey="oxygen" name="Oxígeno" unit=" mg/L" dot={false}/>
+            <Typed.Line dataKey="temperature" name="Temperatura" unit=" ºC" dot={false} stroke={"red"}/>
+            <Typed.Line dataKey="saturation" name="Saturación" unit=" %" dot={false} stroke={"green"}/>
+            <Typed.Line dataKey="salinity" name="Salinidad" unit=" psu" dot={false} stroke={"orange"}/>
             </Typed.LineChart>
         </div>
-    );
+    )
 }

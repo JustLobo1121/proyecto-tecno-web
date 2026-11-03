@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer,
-  Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
+  CartesianGrid, Line, LineChart, ReferenceArea,
+  ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { getSensors } from "../api/sensors";
 import { getSites } from "../api/sites";
 import { getInterventions } from "../api/interventions";
+import { getSiteOverview, toSeries } from "../api/overview";
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 const INTERVENTIONS_SHOWN = 5;
 
-const centerRoute = (id) => `/sites/${id}`;
+const centerRoute = (id) => `/sites?site_id=${id}`;
 
 const STATUS = {
   out_of_range: {
@@ -28,13 +29,6 @@ const STATUS = {
     pill: "bg-green-500/15 text-green-700 dark:text-green-400",
   },
 };
-const DRAW_ORDER = ["ok", "no_data", "out_of_range"];
-
-const MEDITIONS = {
-  oxygen: { label: "Oxígeno", unit: "mg/L" },
-  temperature: { label: "Temperatura", unit: "°C" },
-  salinity: { label: "Salinidad", unit: "PSU" },
-};
 
 const CARD = "rounded-lg border p-4 bg-white dark:bg-gray-800 dark:text-white";
 const HOVER = "transition hover:bg-gray-50 hover:shadow dark:hover:bg-gray-700/40";
@@ -42,30 +36,12 @@ const MUTED = "text-gray-600 dark:text-gray-400";
 const AXIS_TEXT = "currentColor";
 const CLOSED_VALUES = ["closed", "cerrada", "cerrado", "resolved", "done"];
 
-const POINT_HOVER = [
-  "[&_.recharts-scatter-symbol]:cursor-pointer",
-  "[&_.recharts-scatter-symbol_path]:transition-all",
-  "[&_.recharts-scatter-symbol:hover_path]:[stroke-width:6px]",
-  "[&_.recharts-scatter-symbol:hover_path]:[fill-opacity:1]",
-].join(" ");
-
-const pad = (n) => String(n).padStart(2, "0");
-
-const parseAt = (at) => new Date(at.slice(0, 19)).getTime();
-
-function formatMs(ms) {
-  const d = new Date(ms);
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function formatAt(at) {
   if (!at) return "";
   const [date, time] = at.split("T");
   const [, month, day] = date.split("-");
   return `${day}/${month} ${(time ?? "").slice(0, 5)}`;
 }
-
-const shortName = (n) => (n.length > 14 ? `${n.slice(0, 13)}…` : n);
 
 function toIntervention(i) {
   const raw = i.status ?? i.state ?? null;
@@ -122,45 +98,293 @@ function StatusLegend() {
   );
 }
 
-function PointTooltip({ active, payload, siteName }) {
+// Únicamente se mantiene Oxígeno como magnitud requerida
+const MAGNITUDE = { label: "Oxígeno", unit: "mg/L" };
+const MAGNITUDE_KEY = "oxygen";
+
+const RANGES = { "24h": 1, "7d": 7 };
+
+const PALETTE = ["#3b82f6", "#f97316", "#a855f7", "#06b6d4", "#ec4899", "#eab308"];
+
+const SELECT =
+  "rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white";
+
+function buildChartData(series, magnitude) {
+  const byTime = new Map();
+  series.forEach((s) => {
+    (s.points ?? []).forEach((p) => {
+      const v = p[`${magnitude}_avg`];
+      if (v == null) return;
+      const row = byTime.get(p.bucket) ?? { time: p.bucket };
+      row[`s${s.sensor_id}`] = v;
+      byTime.set(p.bucket, row);
+    });
+  });
+  return [...byTime.values()].sort((a, b) => a.time.localeCompare(b.time));
+}
+
+function lastValue(points, magnitude) {
+  let best = null;
+  points.forEach((p) => {
+    const v = p[`${magnitude}_avg`];
+    if (v != null && (!best || p.bucket > best.bucket)) best = { bucket: p.bucket, v };
+  });
+  return best?.v ?? null;
+}
+
+function TrendTooltip({ active, payload, label, unit }) {
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
-  const med = MEDITIONS[d.medition] ?? { label: d.medition, unit: "" };
+  const rows = payload.filter((p) => p.value != null).sort((a, b) => b.value - a.value);
   return (
     <div className="rounded-lg border bg-white p-3 text-sm shadow dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-      <p className="font-semibold">{d.name}</p>
-      <p className={MUTED}>{siteName(d.site_id)}</p>
-      <p>
-        {d.y} {med.unit} · {STATUS[d.status]?.label ?? d.status}
-      </p>
-      {d.dev > 0 && (
-        <p className="text-red-600 dark:text-red-400">
-          {d.dev.toFixed(1)} {med.unit} {d.below ? "bajo el mínimo" : "sobre el máximo"}
+      <p className="mb-1 font-semibold">{formatAt(label)}</p>
+      {rows.map((p) => (
+        <p key={p.dataKey} className="flex items-center gap-2">
+          <span
+            className="inline-block h-2.5 w-2.5 rounded-full"
+            style={{ backgroundColor: p.stroke ?? p.color }}
+          />
+          <span className="flex-1">{p.name}</span>
+          <span className="font-medium">
+            {p.value} {unit}
+          </span>
         </p>
+      ))}
+    </div>
+  );
+}
+
+function TrendChart({ sensors, centers }) {
+  const navigate = useNavigate();
+
+  const [siteId, setSiteId] = useState(centers[0]?.id ?? null);
+  const [range, setRange] = useState("24h");
+  const [series, setSeries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hoverId, setHoverId] = useState(null);
+
+  useEffect(() => {
+    if (siteId == null) return;
+    const controller = new AbortController();
+    setLoading(true);
+
+    getSiteOverview(siteId, { days: RANGES[range] }, { signal: controller.signal })
+      .then((raw) => {
+        setSeries(toSeries(raw));
+        setError(null);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") setError(err.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [siteId, range]);
+
+  const goToSensor = (s) => navigate(`/measurements?site_id=${s.site_id}&sensor_id=${s.id}`);
+
+  const centerSensors = sensors
+    .filter((s) => s.site_id === siteId)
+    .sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+
+  const seriesById = new Map(series.map((s) => [String(s.sensor_id), s]));
+  const data = buildChartData(series, MAGNITUDE_KEY);
+
+  const entries = centerSensors.map((s, i) => ({
+    sensor: s,
+    key: `s${s.id}`,
+    color: PALETTE[i % PALETTE.length],
+    last: lastValue(seriesById.get(String(s.id))?.points ?? [], MAGNITUDE_KEY),
+  }));
+
+  const lo = `${MAGNITUDE_KEY}_min`;
+  const hi = `${MAGNITUDE_KEY}_max`;
+  const ranged = centerSensors.filter(
+    (s) => s.medition === MAGNITUDE_KEY && s[lo] != null && s[hi] != null
+  );
+  const rangeKeys = new Set(ranged.map((s) => `${s[lo]}|${s[hi]}`));
+  const band = rangeKeys.size === 1 ? { lo: ranged[0][lo], hi: ranged[0][hi] } : null;
+
+  return (
+    <div className={`${CARD} h-full`}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-bold">Evolución de Oxígeno en Sensores</h3>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className={SELECT}
+            value={siteId ?? ""}
+            onChange={(e) =>
+              setSiteId(centers.find((c) => String(c.id) === e.target.value)?.id ?? null)
+            }
+          >
+            {centers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.out_of_range > 0 ? ` · ${c.out_of_range} fuera de rango` : ""}
+              </option>
+            ))}
+          </select>
+
+          <div className="flex gap-1">
+            {Object.keys(RANGES).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRange(r)}
+                className={`rounded-lg border px-3 py-1.5 text-sm ${
+                  r === range
+                    ? "border-gray-900 bg-gray-900 text-white dark:border-gray-600 dark:bg-gray-600"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
+                {r === "24h" ? "24 horas" : "7 días"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {centers.length === 0 ? (
+        <p className={MUTED}>No hay centros para mostrar.</p>
+      ) : loading ? (
+        <p className={MUTED}>Cargando mediciones...</p>
+      ) : error ? (
+        <p className="text-red-600">{error}</p>
+      ) : data.length === 0 ? (
+        <p className={MUTED}>Ningún sensor de este centro tiene lecturas de oxígeno en el rango elegido.</p>
+      ) : (
+        <div className={`h-80 w-full ${MUTED}`}>
+          <ResponsiveContainer>
+            <LineChart data={data} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
+              <CartesianGrid
+                vertical={false}
+                strokeDasharray="3 3"
+                stroke={AXIS_TEXT}
+                strokeOpacity={0.25}
+              />
+              <XAxis
+                dataKey="time"
+                tickFormatter={formatAt}
+                minTickGap={48}
+                tick={{ fill: AXIS_TEXT, fontSize: 11 }}
+                stroke={AXIS_TEXT}
+              />
+              <YAxis
+                width={64}
+                domain={["auto", "auto"]}
+                unit={` ${MAGNITUDE.unit}`}
+                tick={{ fill: AXIS_TEXT, fontSize: 12 }}
+                stroke={AXIS_TEXT}
+              />
+
+              {band && (
+                <>
+                  <ReferenceArea
+                    y1={band.lo}
+                    y2={band.hi}
+                    fill="#22c55e"
+                    fillOpacity={0.1}
+                    ifOverflow="extendDomain"
+                  />
+                  <ReferenceLine
+                    y={band.lo}
+                    stroke="#22c55e"
+                    strokeDasharray="6 4"
+                    ifOverflow="extendDomain"
+                    label={{ value: `Mín ${band.lo}`, position: "insideBottomRight", fill: "#22c55e", fontSize: 11 }}
+                  />
+                  <ReferenceLine
+                    y={band.hi}
+                    stroke="#22c55e"
+                    strokeDasharray="6 4"
+                    ifOverflow="extendDomain"
+                    label={{ value: `Máx ${band.hi}`, position: "insideTopRight", fill: "#22c55e", fontSize: 11 }}
+                  />
+                </>
+              )}
+
+              <Tooltip content={(props) => <TrendTooltip {...props} unit={MAGNITUDE.unit} />} />
+
+              {entries.map((e) => (
+                <Line
+                  key={e.key}
+                  type="monotone"
+                  dataKey={e.key}
+                  name={e.sensor.sensor_name}
+                  stroke={e.color}
+                  strokeWidth={hoverId === e.sensor.id ? 3.5 : 2}
+                  strokeOpacity={hoverId == null || hoverId === e.sensor.id ? 1 : 0.15}
+                  dot={false}
+                  activeDot={{
+                    r: 5,
+                    style: { cursor: "pointer" },
+                    onClick: () => goToSensor(e.sensor),
+                  }}
+                  isAnimationActive={false}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       )}
-      {d.lo != null && d.hi != null && (
-        <p className={MUTED}>
-          Rango permitido: {d.lo} – {d.hi} {med.unit}
-        </p>
+
+      {entries.length > 0 && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {entries.map((e) => {
+            const st = STATUS[e.sensor.status];
+            return (
+              <button
+                key={e.key}
+                type="button"
+                onClick={() => goToSensor(e.sensor)}
+                onMouseEnter={() => setHoverId(e.sensor.id)}
+                onMouseLeave={() => setHoverId(null)}
+                onFocus={() => setHoverId(e.sensor.id)}
+                onBlur={() => setHoverId(null)}
+                className={`flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-left dark:border-gray-700 ${HOVER}`}
+              >
+                <span className="h-1 w-6 shrink-0 rounded" style={{ backgroundColor: e.color }} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">
+                    {e.sensor.sensor_name}
+                  </span>
+                  <span className={`block text-xs ${MUTED}`}>
+                    {e.last != null
+                      ? `${e.last} ${MAGNITUDE.unit} · último promedio`
+                      : "Sin lecturas en este rango"}
+                  </span>
+                </span>
+                <span className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${st?.pill ?? ""}`}>
+                  {st?.label ?? e.sensor.status}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       )}
-      <p className={MUTED}>Última lectura: {formatAt(d.at)}</p>
-      <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-        Clic para ver el detalle del sensor
+
+      <p className={`mt-3 text-xs ${MUTED}`}>
+        Cada línea muestra el promedio por hora del oxígeno en los sensores del centro elegido.
+        {band
+          ? ` La franja verde es el rango permitido (${band.lo}–${band.hi} ${MAGNITUDE.unit}).`
+          : " No hay un rango permitido único."}{" "}
+        Pasa el cursor por un sensor de la lista para resaltar su línea, o haz clic en un
+        punto para abrir sus mediciones.
       </p>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-
   const [sensors, setSensors] = useState([]);
   const [sites, setSites] = useState([]);
   const [interventions, setInterventions] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [xMode, setXMode] = useState("center");
-
 
   useEffect(() => {
     let cancelled = false;
@@ -199,94 +423,6 @@ export default function Dashboard() {
     if (s.status in counts) counts[s.status] += 1;
   });
 
-  const base = sensors
-    .filter((s) => s.last_reading?.at != null && s.last_reading?.value != null)
-    .map((s) => {
-      const v = s.last_reading.value;
-      const lo = s[`${s.medition}_min`];
-      const hi = s[`${s.medition}_max`];
-      const below = lo != null && v < lo;
-      const above = hi != null && v > hi;
-      const dev = below ? lo - v : above ? v - hi : 0;
-      const width = lo != null && hi != null ? hi - lo : null;
-      return {
-        id: s.id,
-        site_id: s.site_id,
-        name: s.sensor_name,
-        status: s.status,
-        medition: s.medition,
-        at: s.last_reading.at,
-        xt: parseAt(s.last_reading.at),
-        y: v,
-        lo,
-        hi,
-        dev,
-        below,
-        size:
-          s.status === "out_of_range"
-            ? Math.min(7, 2 + (width ? (5 * dev) / width : 0))
-            : 1,
-      };
-    });
-
-  const perSite = new Map();
-  base.forEach((p) => {
-    if (!perSite.has(p.site_id)) perSite.set(p.site_id, []);
-    perSite.get(p.site_id).push(p);
-  });
-  const siteIds = [...perSite.keys()].sort((a, b) =>
-    siteName(a).localeCompare(siteName(b))
-  );
-  const points = [];
-  siteIds.forEach((id, ci) => {
-    const group = perSite
-      .get(id)
-      .sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
-    const step = Math.min(0.2, 0.7 / Math.max(group.length - 1, 1));
-    group.forEach((p, k) => {
-      points.push({ ...p, xc: ci + (k - (group.length - 1) / 2) * step });
-    });
-  });
-
-  const series = DRAW_ORDER.map((status) => ({
-    status,
-    data: points.filter((p) => p.status === status),
-  }));
-
-  const meditions = new Set(points.map((p) => p.medition));
-  const mixedUnits = meditions.size > 1;
-  const unit = !mixedUnits ? MEDITIONS[[...meditions][0]]?.unit ?? "" : "";
-  const medLabel = !mixedUnits ? MEDITIONS[[...meditions][0]]?.label ?? "Valor" : "Valor";
-  const yLabel = unit ? `${medLabel} (${unit})` : medLabel;
-
-  const ranges = new Set(
-    points.filter((p) => p.lo != null && p.hi != null).map((p) => `${p.lo}|${p.hi}`)
-  );
-  const firstRanged = points.find((p) => p.lo != null && p.hi != null);
-  const band = !mixedUnits && ranges.size === 1 ? { lo: firstRanged.lo, hi: firstRanged.hi } : null;
-
-  const byCenter = xMode === "center";
-  const xAxisProps = byCenter
-    ? {
-        dataKey: "xc",
-        name: "Centro",
-        domain: [-0.5, siteIds.length - 0.5],
-        ticks: siteIds.map((_, i) => i),
-        tickFormatter: (i) => (siteIds[i] == null ? "" : shortName(siteName(siteIds[i]))),
-        interval: 0,
-        angle: -25,
-        textAnchor: "end",
-        height: 72,
-      }
-    : {
-        dataKey: "xt",
-        name: "Hora",
-        domain: [(min) => min - 30 * 60_000, (max) => max + 30 * 60_000],
-        tickFormatter: formatMs,
-        tickCount: 6,
-        height: 48,
-      };
-
   const bySite = new Map();
   sensors.forEach((s) => {
     const entry = bySite.get(s.site_id) ?? {
@@ -319,12 +455,6 @@ export default function Dashboard() {
     )
     .slice(0, INTERVENTIONS_SHOWN);
 
-  function handlePointClick(p) {
-    const d = p?.payload ?? p;
-    if (d?.id == null) return;
-    navigate(`/measurements?site_id=${d.site_id}&sensor_id=${d.id}`);
-  }
-
   return (
     <div className="p-8 bg-gray-50 dark:bg-gray-900">
       <h2 className="text-2xl font-bold mb-6 dark:text-white">Dashboard</h2>
@@ -336,128 +466,11 @@ export default function Dashboard() {
           <StatusCard status="ok" count={counts.ok} />
         </div>
 
-        <div className={`${CARD} lg:col-span-2`}>
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <h3 className="text-lg font-bold">Última lectura de cada sensor</h3>
-            <div className="flex gap-1 text-sm">
-              {[
-                ["center", "Por centro"],
-                ["time", "Por hora"],
-              ].map(([k, label]) => (
-                <button
-                  key={k}
-                  onClick={() => setXMode(k)}
-                  className={`rounded border px-3 py-1 ${
-                    xMode === k ? "bg-gray-900 text-white dark:bg-gray-600" : ""
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="mb-3">
-            <StatusLegend />
-          </div>
-
-          {points.length === 0 ? (
-            <p className={MUTED}>Ningún sensor tiene lecturas para graficar.</p>
-          ) : (
-            <div className={`h-96 w-full ${MUTED} ${POINT_HOVER}`}>
-              <ResponsiveContainer>
-                <ScatterChart margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke={AXIS_TEXT} strokeOpacity={0.25} />
-                  <XAxis
-                    type="number"
-                    tick={{ fill: AXIS_TEXT, fontSize: 11 }}
-                    stroke={AXIS_TEXT}
-                    label={{
-                      value: byCenter ? "Centro" : "Hora de la última lectura",
-                      position: "insideBottom",
-                      fill: AXIS_TEXT,
-                      fontSize: 12,
-                    }}
-                    {...xAxisProps}
-                  />
-                  <YAxis
-                    type="number"
-                    dataKey="y"
-                    name="Valor"
-                    width={64}
-                    domain={[
-                      (min) => Math.floor(Math.min(min, band?.lo ?? min) - 1),
-                      (max) => Math.ceil(Math.max(max, band?.hi ?? max) + 1),
-                    ]}
-                    tick={{ fill: AXIS_TEXT, fontSize: 12 }}
-                    stroke={AXIS_TEXT}
-                    label={{
-                      value: yLabel,
-                      angle: -90,
-                      position: "insideLeft",
-                      fill: AXIS_TEXT,
-                      fontSize: 12,
-                      style: { textAnchor: "middle" },
-                    }}
-                  />
-                  <ZAxis dataKey="size" domain={[1, 7]} range={[80, 420]} />
-
-                  {band && (
-                    <>
-                      <ReferenceArea y1={band.lo} y2={band.hi} fill="#22c55e" fillOpacity={0.08} ifOverflow="visible" />
-                      <ReferenceLine
-                        y={band.lo}
-                        stroke="#22c55e"
-                        strokeDasharray="6 4"
-                        ifOverflow="visible"
-                        label={{ value: `Mín ${band.lo}`, position: "insideBottomRight", fill: "#22c55e", fontSize: 11 }}
-                      />
-                      <ReferenceLine
-                        y={band.hi}
-                        stroke="#22c55e"
-                        strokeDasharray="6 4"
-                        ifOverflow="visible"
-                        label={{ value: `Máx ${band.hi}`, position: "insideTopRight", fill: "#22c55e", fontSize: 11 }}
-                      />
-                    </>
-                  )}
-
-                  <Tooltip
-                    cursor={{ strokeDasharray: "3 3" }}
-                    content={(props) => <PointTooltip {...props} siteName={siteName} />}
-                  />
-                  {series.map(({ status, data }) => (
-                    <Scatter
-                      key={status}
-                      name={STATUS[status].label}
-                      data={data}
-                      fill={STATUS[status].color}
-                      fillOpacity={0.8}
-                      stroke={STATUS[status].color}
-                      strokeWidth={1.5}
-                      isAnimationActive={false}
-                      onClick={handlePointClick}
-                    />
-                  ))}
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          <p className={`text-xs ${MUTED} mt-2`}>
-            {byCenter
-              ? "Cada columna es un centro y cada burbuja un sensor; las más grandes están más lejos de su rango permitido."
-              : "El eje horizontal es la hora de la última lectura: los sensores que dejaron de transmitir quedan más a la izquierda."}{" "}
-            Los grises muestran el valor de su última lectura.
-            {band && ` Franja verde: rango permitido (${band.lo}–${band.hi} ${unit}).`}
-            {!band && ranges.size > 1 && " Los sensores tienen rangos permitidos distintos: se muestran al pasar el cursor."}
-            {sensors.length > points.length &&
-              ` ${sensors.length - points.length} sensor(es) sin lecturas no aparecen.`}
-            {mixedUnits && " Hay sensores con distintas magnitudes: el eje vertical mezcla unidades."}
-          </p>
-        </div>
+        <div className="lg:col-span-2">
+           <TrendChart sensors={sensors} centers={centers} />
+           </div>
       </div>
 
-      {/* Centros + intervenciones */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className={CARD}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -523,9 +536,16 @@ export default function Dashboard() {
                   : siteId != null
                   ? siteName(siteId)
                   : "Sin asignar";
+                const to = sensor
+                  ? `/measurements?site_id=${sensor.site_id}&sensor_id=${sensor.id}`
+                  : siteId != null
+                  ? centerRoute(siteId)
+                  : "/interventions";
+
                 return (
-                  <div
+                  <Link
                     key={it.id}
+                    to={to}
                     className={`block rounded-lg border px-4 py-3 dark:border-gray-700 ${HOVER}`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -551,7 +571,7 @@ export default function Dashboard() {
                       </p>
                     )}
                     <p className={`mt-1 text-xs ${MUTED}`}>{formatAt(it.at)}</p>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
