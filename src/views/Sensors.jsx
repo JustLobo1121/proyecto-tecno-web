@@ -325,7 +325,7 @@ function Sensors() {
                                 </div>
                             </div>
                             </div>
-                            <div className="md:w-2/3 flex flex-col p-2 gap-4 h-80 md:h-auto min-h-[300px]">
+                            <div className="md:w-2/3 flex flex-col p-2 gap-4 h-80 md:h-auto min-h-[470px]">
                                 <SensorChart sensorData={dataModal} />
                             </div>
                         

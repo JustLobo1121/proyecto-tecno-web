@@ -6,7 +6,7 @@ async function populateData(rawData, setData) {
     const data = []
     rawData.data.map((entry) => {
         data.unshift({
-            x: entry.oxygen,
+            oxygen: entry.oxygen,
             date: new Date(Date.parse(entry.timestamp)).toLocaleString("es-CL")
         })
     })
@@ -37,19 +37,24 @@ export function SensorChart({ sensorData }) {
     }, [range])
     return (
         <div className="text-gray-900 dark:text-gray-200">
-            <select 
-                value={range} 
-                onChange={(e) => setRange(e.target.value)}
-                className="mb-4 p-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded outline-none"
-            >
-                <option value={3600 * 1}>1 hora</option>
-                <option value={3600 * 2}>2 horas</option>
-                <option value={3600 * 4}>4 horas</option>
-                <option value={3600 * 8}>8 horas</option>
-                <option value={3600 * 24}>1 día</option>
-                <option value={3600 * 48}>2 días</option>
-                <option value={3600 * 72}>3 días</option>
-            </select>
+            <div className="flex justify-start w-1/2">
+                <h3 className="text-gray-900 dark:text-gray-200">Rango de tiempo</h3>
+                <div className="px-4">
+                    <select 
+                    value={range} 
+                    onChange={(e) => setRange(e.target.value)}
+                    className="mb-4 p-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded outline-none"
+                >
+                    <option value={3600 * 1}>1 hora</option>
+                    <option value={3600 * 2}>2 horas</option>
+                    <option value={3600 * 4}>4 horas</option>
+                    <option value={3600 * 8}>8 horas</option>
+                    <option value={3600 * 24}>1 día</option>
+                    <option value={3600 * 48}>2 días</option>
+                    <option value={3600 * 72}>3 días</option>
+                </select>
+                </div>
+            </div>
             <Typed.LineChart
             style={{ width: '100%', maxWidth: '700px', height: '100%', maxHeight: '70vh', aspectRatio: 1.618 }}
             responsive
@@ -74,7 +79,7 @@ export function SensorChart({ sensorData }) {
                 itemStyle={{ color: '#60a5fa' }}
             />
             <Legend />
-            <Typed.Line dataKey="x" name="Oxígeno" unit=" mg/L"/>
+            <Typed.Line dataKey="oxygen" name="Oxígeno" unit=" mg/L" dot={false}/>
             </Typed.LineChart>
         </div>
     )
