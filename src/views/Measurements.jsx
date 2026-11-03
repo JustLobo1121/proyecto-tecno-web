@@ -372,7 +372,16 @@ function SensorChart({ id, site}) {
                     (dataMax) => Math.max(dataMax, max ?? dataMax),
                   ]}
                 />
-                <Tooltip labelFormatter={formatTime} />
+                <Tooltip 
+                  labelFormatter={formatTime}
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    borderColor: '#374151',
+                    color: '#f3f4f6',
+                    borderRadius: '0.5rem'
+                  }}
+                  itemStyle={{ color: '#60a5fa' }}
+                />
                 {min != null && (
                   <ReferenceLine y={min} stroke="#dc2626" strokeDasharray="4 4" label="Mín" />
                 )}

@@ -1,6 +1,6 @@
-import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, createHorizontalChart } from 'recharts';
-import { getMeasurements } from '../api/measurements';
-import { useEffect, useState } from 'react';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, createHorizontalChart } from 'recharts'
+import { getMeasurements } from '../api/measurements'
+import { useEffect, useState } from 'react'
 
 async function populateData(rawData, setData) {
     const data = []
@@ -17,9 +17,9 @@ async function populateData(rawData, setData) {
 }
 
 export function SensorChart({ sensorData }) {
-    const [data, setData] = useState([]);
-    const [range, setRange] = useState(3600 * 24);
-    const Typed = createHorizontalChart()({ XAxis, YAxis, Tooltip, Line });
+    const [data, setData] = useState([])
+    const [range, setRange] = useState(3600 * 24)
+    const Typed = createHorizontalChart()({ XAxis, YAxis, Tooltip, Line })
     const currDate = new Date()
     useEffect(() => {
         getMeasurements({
@@ -36,8 +36,12 @@ export function SensorChart({ sensorData }) {
     })
     }, [range])
     return (
-        <div>
-            <select value={range} onChange={(e) => setRange(e.target.value)}>
+        <div className="text-gray-900 dark:text-gray-200">
+            <select 
+                value={range} 
+                onChange={(e) => setRange(e.target.value)}
+                className="mb-4 p-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded outline-none"
+            >
                 <option value={3600 * 1}>1 hora</option>
                 <option value={3600 * 2}>2 horas</option>
                 <option value={3600 * 4}>4 horas</option>
@@ -58,12 +62,20 @@ export function SensorChart({ sensorData }) {
             }}
             >
             <CartesianGrid />
-            <Typed.XAxis dataKey="date" />
-            <Typed.YAxis width="auto" />
-            <Tooltip />
+            <Typed.XAxis dataKey="date" tick={{ fill: 'currentColor' }} />
+            <Typed.YAxis width="auto" tick={{ fill: 'currentColor' }} />
+            <Tooltip 
+                contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    borderColor: '#374151',
+                    color: '#f3f4f6',
+                    borderRadius: '0.5rem'
+                }}
+                itemStyle={{ color: '#60a5fa' }}
+            />
             <Legend />
             <Typed.Line dataKey="x" name="Oxígeno" unit=" mg/L"/>
             </Typed.LineChart>
         </div>
-    );
+    )
 }

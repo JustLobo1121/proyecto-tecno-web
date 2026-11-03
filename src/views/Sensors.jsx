@@ -175,12 +175,12 @@ function Sensors() {
                             setSearchTerm(e.target.value)
                             setCurrentPage(1)
                         }}
-                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[200px] flex-grow sm:flex-grow-0 text-sm"
+                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[200px] flex-grow sm:flex-grow-0 text-sm text-gray-800 dark:text-gray-200"
                     />
                     <select 
                         value={filterStatus}
                         onChange={handleFilterStatusChange}
-                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
+                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm text-gray-800 dark:text-gray-200"
                     >
                         <option value="all">Todos los Estados</option>
                         <option value="ok">Solo OK</option>
@@ -193,7 +193,7 @@ function Sensors() {
                             setFilterPosition(e.target.value)
                             setCurrentPage(1)
                         }}
-                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm"
+                        className="p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg outline-none min-w-[180px] text-sm text-gray-800 dark:text-gray-200"
                     >
                         <option value="all">Todas las Posiciones</option>
                         <option value="jaula">Jaula</option>
@@ -251,7 +251,7 @@ function Sensors() {
                     onClick={handleCloseModal}
                 >
                     <div 
-                        className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden"
+                        className="bg-white dark:bg-gray-800 w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center p-5 border-b dark:border-gray-700">
@@ -259,11 +259,19 @@ function Sensors() {
                                 {dataModal.sensor_name}
                                 {!dataModal.transmitting && <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Sin Señal</span>}
                             </h3>
+                            <button 
+                                onClick={handleCloseModal}
+                                className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-2xl font-bold leading-none focus:outline-none"
+                            >
+                                &times;
+                            </button>
                         </div>
-                        <div className="p-5 space-y-4 text-gray-700 dark:text-gray-300">
+                        <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-5 gap-6">
+
+                            <div className="md:w-1/3 flex flex-col text-gray-700 dark:text-gray-300">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <strong className="block text-gray-500 mb-1">Centro Asignado</strong> 
+                                    <strong className="block text-gray-500 dark:text-gray-400 mb-1">Centro Asignado</strong> 
                                     <button 
                                         onClick={() => {
                                             handleCloseModal()
@@ -277,12 +285,12 @@ function Sensors() {
                                         </span>
                                     </button>
                                 </div>
-                                <div><strong className="block text-gray-500">Medición</strong> {mapMedition(dataModal.medition)}</div>
-                                <div><strong className="block text-gray-500">Posición</strong> {mapPosition(dataModal.position)} ({dataModal.depth}m)</div>
+                                <div><strong className="block text-gray-500 dark:text-gray-400">Medición</strong> {mapMedition(dataModal.medition)}</div>
+                                <div><strong className="block text-gray-500 dark:text-gray-400">Posición</strong> {mapPosition(dataModal.position)} ({dataModal.depth}m)</div>
                             </div>
                             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border dark:border-gray-700">
                                 <div className="flex justify-between mb-2">
-                                    <span className="font-bold text-gray-700 dark:text-gray-200">Lectura</span>
+                                    <span className="font-bold text-gray-700 dark:text-gray-200">Lectura actual</span>
                                     <span className={`font-bold ${dataModal.status === 'out_of_range' ? 'text-red-500' : 'text-green-500'}`}>
                                         {dataModal.last_reading?.value || '--'} mg/L
                                     </span>
@@ -302,21 +310,27 @@ function Sensors() {
                                             style={{
                                                 left: `${Math.min(Math.max(((dataModal.last_reading.value - (dataModal.oxygen_min - 2)) / ((dataModal.oxygen_max + 2) - (dataModal.oxygen_min - 2))) * 100, 0), 100)}%`
                                             }}
-                                        ></div>
+                                        >
+                                        </div>
                                     )}
                                 </div>
                                 
-                                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                                     <span>Mín: {dataModal.oxygen_min}</span>
                                     <span>Máx: {dataModal.oxygen_max}</span>
                                 </div>
                                 
-                                <div className="text-xs text-center text-gray-500 mt-3 pt-3 border-t dark:border-gray-700">
+                                <div className="text-xs text-center text-gray-500 dark:text-gray-400 mt-3 pt-3 border-t dark:border-gray-700">
                                     Última actualización: {dataModal.last_reading ? new Date(dataModal.last_reading.at).toLocaleString() : 'N/A'}
                                 </div>
                             </div>
+                            </div>
+                            <div className="md:w-2/3 flex flex-col p-2 gap-4 h-80 md:h-auto min-h-[300px]">
+                                <SensorChart sensorData={dataModal} />
+                            </div>
+                        
                         </div>
-                        <SensorChart sensorData={dataModal} />
+
                         <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end">
                             <button 
                                 onClick={handleCloseModal}
