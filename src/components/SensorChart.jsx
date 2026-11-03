@@ -7,6 +7,9 @@ async function populateData(rawData, setData) {
     rawData.data.map((entry) => {
         data.unshift({
             oxygen: entry.oxygen,
+            saturation: entry.saturation,
+            temperature: entry.temperature,
+            salinity: entry.salinity,
             date: new Date(Date.parse(entry.timestamp)).toLocaleString("es-CL")
         })
     })
@@ -68,7 +71,6 @@ export function SensorChart({ sensorData }) {
             >
             <CartesianGrid />
             <Typed.XAxis dataKey="date" tick={{ fill: 'currentColor' }} />
-            <Typed.YAxis width="auto" tick={{ fill: 'currentColor' }} />
             <Tooltip 
                 contentStyle={{ 
                     backgroundColor: '#1f2937', 
@@ -80,6 +82,9 @@ export function SensorChart({ sensorData }) {
             />
             <Legend />
             <Typed.Line dataKey="oxygen" name="Oxígeno" unit=" mg/L" dot={false}/>
+            <Typed.Line dataKey="temperature" name="Temperatura" unit=" ºC" dot={false} stroke={"red"}/>
+            <Typed.Line dataKey="saturation" name="Saturación" unit=" %" dot={false} stroke={"green"}/>
+            <Typed.Line dataKey="salinity" name="Salinidad" unit=" psu" dot={false} stroke={"orange"}/>
             </Typed.LineChart>
         </div>
     )
