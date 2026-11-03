@@ -139,6 +139,8 @@ function Interventions() {
                             <th className="px-6 py-4">Sitio</th>
                             <th className="px-6 py-4">Motivo</th>
                             <th className="px-6 py-4">Estado</th>
+                            <th className="px-6 py-4">Apertura</th>
+                            <th className="px-6 py-4">Cierre</th>
                             <th className="px-6 py-4">Resultado</th>
                             <th className="px-6 py-4">Observaciones</th>
                         </tr>
@@ -158,6 +160,8 @@ function Interventions() {
                                             {String(item.status === 'open' ? 'Abierta' : item.status === 'closed' ? 'Cerrada' : 'Sin estado').replace(/[_-]+/g, ' ')}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{new Date(Date.parse(item.created_at)).toLocaleString("es-CL")}</td>
+                                    <td className="px-6 py-4 text-gray-500 max-w-sm truncate">{item.closed_at ? new Date(Date.parse(item.closed_at)).toLocaleString("es-CL") : ""}</td>
                                     <td className="px-6 py-4 text-gray-500 max-w-sm truncate">
                                         {item.outcome && <span className="px-2.5 py-1 rounded-full text-xs font-semibold uppercase text-white bg-purple-500">
                                             {mapOutcome(item.outcome)}
@@ -168,7 +172,7 @@ function Interventions() {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="5" className="text-center py-10 text-gray-500">
+                                <td colSpan="7" className="text-center py-10 text-gray-500">
                                     {status
                                         ? 'No hay intervenciones con ese estado.'
                                         : 'No hay intervenciones registradas.'}
