@@ -296,12 +296,6 @@ function SensorChart({ id, site}) {
         >
           {STATUS_LABELS[sensor.status] ?? sensor.status}
         </span>
-        <Link
-          to={`/interventions?sensor_id=${id}`}
-          className="ml-auto rounded border px-3 py-1 text-sm hover:shadow dark:text-white"
-        >
-          Abrir intervención
-        </Link>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
