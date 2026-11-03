@@ -29,7 +29,14 @@ const STATUS_STYLES = {
 
 const CARD = "rounded-lg border p-4 bg-white dark:bg-gray-800 dark:text-white";
 
-const toPoint = (m) => ({ time: m.at ?? m.timestamp, value: m.value });
+const toPoint = (m) => {
+  // Buscamos dinámicamente qué campo trae el valor (oxygen, temperature o salinity)
+  const val = m.oxygen ?? m.temperature ?? m.salinity ?? m.value;
+  return { 
+    time: m.timestamp ?? m.at ?? m.created_at, 
+    value: val != null ? Number(val) : null 
+  };
+};
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -236,8 +243,8 @@ function SensorChart({ id, site }) {
     let cancelled = false;
     setLoading(true);
 
-    const to = lastAt ? new Date(lastAt.slice(0, 19)) : new Date();
-    const from = new Date(to.getTime() - RANGES[range] * 86_400_000);
+  const to = lastAt ? new Date(lastAt.replace(" ", "T")) : new Date();
+  const from = new Date(to.getTime() - RANGES[range] * 86_400_000);
 
     fetchRange({ sensor_id: id, from: toApiDate(from), to: toApiDate(to) })
       .then(({ rows, total }) => {
