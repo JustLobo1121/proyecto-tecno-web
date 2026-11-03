@@ -4,6 +4,7 @@ import { getSensors } from '../api/sensors'
 import { getSite } from '../api/sites'
 import { CardSensors } from '../components/Cards'
 import { mapMedition, mapPosition } from "../api/mappings"
+import { SensorChart } from '../components/SensorChart'
 
 function Sensors() {
     const PAGE_SIZE = 15
@@ -315,7 +316,7 @@ function Sensors() {
                                 </div>
                             </div>
                         </div>
-
+                        <SensorChart sensorData={dataModal} />
                         <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end">
                             <button 
                                 onClick={handleCloseModal}
